@@ -65,6 +65,27 @@ class PluginFlux:
     infoString = QString("Hello, Robin!")
     QMessageBox.information(self.iface.mainWindow(),"About",infoString)
     
+  def createTempLayer(layerType, layerName):
+      tmpLayer = QgsVectorLayer(layerType, layerName, "memory")
+      tmpLayer.updateExtents()
+      QgsMapLayerRegistry().instance().addMapLayer(tmpLayer, True)
+      return tmpLayer
+  
+  # Pris dans l'extension cadTools   
+  def getLayerByName(layername):
+    layermap = QgsMapLayerRegistry.instance().mapLayers()
+    for name, layer in layermap.iteritems():
+        if layer.name() == layername:
+            if layer.isValid():
+                return layer
+            else:
+                print "Couche non valide"
+                return None
+        else:
+            print 'Aucune couche ne porte ce nom'
+            return None
+
+    
   def doExportSVG(self):
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
