@@ -53,7 +53,7 @@ p, li { white-space: pre-wrap; }
     </rect>
    </property>
    <property name="text">
-    <string>Show Message Box</string>
+    <string>Show MsgBox</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pB_exportSVG">

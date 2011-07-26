@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui.ui'
 #
-# Created: Mon Jul 25 15:11:58 2011
+# Created: Mon Jul 25 18:54:14 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -42,6 +42,6 @@ class Ui_Dialog(object):
 "</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.btnClose.setText(QtGui.QApplication.translate("Dialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
-        self.btnShowMsgBox.setText(QtGui.QApplication.translate("Dialog", "Show Message Box", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnShowMsgBox.setText(QtGui.QApplication.translate("Dialog", "Show MsgBox", None, QtGui.QApplication.UnicodeUTF8))
         self.pB_exportSVG.setText(QtGui.QApplication.translate("Dialog", "ExportSVG", None, QtGui.QApplication.UnicodeUTF8))
 

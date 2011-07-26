@@ -115,3 +115,4 @@ class Proto1:
     else:
         QMessageBox.information(self.iface.mainWindow(),"Erreur !",
                                 'L\'export SVG ne fonctionne que pour les shape de type lineaires')
+
