@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: latin1 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -35,7 +35,7 @@ class PluginFlux:
     flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
     self.pluginGui = ui_Control(self.iface.mainWindow(), flags)
     
-    # On crÃ©e nos variables pour explorer les couches[...]
+    # On crée nos variables pour explorer les couches[...]
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
     if (layer == None):
@@ -84,8 +84,8 @@ class PluginFlux:
         else:
             print 'Aucune couche ne porte ce nom'
             return None
+            
 
-    
   def doExportSVG(self):
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
@@ -113,7 +113,7 @@ class PluginFlux:
             '<svg xmlns="http://www.w3.org/2000/svg"' + \
             ' width="1000" height="1000" version="1.1" x="test" xmlns:xlink="http://www.w3.org/1999/xlink"  >\n \n'
                    
-            # Boucle pour crÃ©er le svg :
+            # Boucle pour créer le svg :
             provider.nextFeature(feat)
             for i in range(layer.featureCount()):
                 linesvg += '<polyline style="stroke:blue; stroke-width:10; fill:none; " points="'
@@ -122,7 +122,7 @@ class PluginFlux:
                     yfeat = feat.geometry().asPolyline()[ibis].y()
                     xsvg = ((xfeat - xmin) / (xmax - xmin)) * 1000
                     ysvg = ((ymax - yfeat) / (ymax - ymin)) * 1000
-                    # ConcatÃ©nation des coords svg d'une ligne
+                    # Concaténation des coords svg d'une ligne
                     linesvg += str(int(xsvg)) + "," + str(int(ysvg)) + " "
                 provider.nextFeature(feat)
                 # Fin de ligne
