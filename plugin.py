@@ -7,14 +7,14 @@ from qgis.core import *
 from ui_control import ui_Control
 import resources_rc
 
-class Proto1:
+class PluginFlux:
 
   def __init__(self, iface):
     self.iface = iface
 
   def initGui(self):
     # create action that will start plugin configuration
-    self.action = QAction(QIcon(":/icon.png"), "Proto1", self.iface.mainWindow())
+    self.action = QAction(QIcon(":/icon.png"), "PluginFlux", self.iface.mainWindow())
     self.action.setWhatsThis("Configuration for test plugin")
     self.action.setStatusTip("This is status tip")
 
@@ -23,11 +23,11 @@ class Proto1:
 
     # add toolbar button and menu item
     self.iface.addToolBarIcon(self.action)
-    self.iface.addPluginToMenu("&Proto1", self.action)
+    self.iface.addPluginToMenu("&PluginFlux", self.action)
 
   def unload(self):
     # remove the plugin menu item and icon
-    self.iface.removePluginMenu("&Proto1",self.action)
+    self.iface.removePluginMenu("&PluginFlux",self.action)
     self.iface.removeToolBarIcon(self.action)
 
   def run(self):
