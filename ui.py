@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui.ui'
 #
-# Created: Mon Jul 25 18:54:14 2011
+# Created: Wed Jul 27 14:45:46 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,6 +30,9 @@ class Ui_Dialog(object):
         self.pB_exportSVG = QtGui.QPushButton(Dialog)
         self.pB_exportSVG.setGeometry(QtCore.QRect(220, 590, 111, 31))
         self.pB_exportSVG.setObjectName(_fromUtf8("pB_exportSVG"))
+        self.pB_Bezier = QtGui.QPushButton(Dialog)
+        self.pB_Bezier.setGeometry(QtCore.QRect(110, 590, 101, 31))
+        self.pB_Bezier.setObjectName(_fromUtf8("pB_Bezier"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -44,4 +47,5 @@ class Ui_Dialog(object):
         self.btnClose.setText(QtGui.QApplication.translate("Dialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
         self.btnShowMsgBox.setText(QtGui.QApplication.translate("Dialog", "Show MsgBox", None, QtGui.QApplication.UnicodeUTF8))
         self.pB_exportSVG.setText(QtGui.QApplication.translate("Dialog", "ExportSVG", None, QtGui.QApplication.UnicodeUTF8))
+        self.pB_Bezier.setText(QtGui.QApplication.translate("Dialog", "Bezier", None, QtGui.QApplication.UnicodeUTF8))
 
