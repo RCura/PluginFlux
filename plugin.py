@@ -31,30 +31,33 @@ class PluginFlux:
     self.iface.removeToolBarIcon(self.action)
 
   def run(self):
+    """
+    Fonction principale, s'éxecute quand on lance le plugin depuis son icone.
+    """
     # create and show a configuration dialog or something similar
     flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
     self.pluginGui = ui_Control(self.iface.mainWindow(), flags)
-    
+
     # On crée nos variables pour explorer les couches[...]
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
     if (layer == None):
         QMessageBox.information(self.iface.mainWindow(),"About","Aucune couche n'est chargee")
-    else:  
+    else:
         # On sort quelques infos
         lyname = layer.name()
         fcount = str(layer.featureCount())
-        
-    
+
+
         expText = "Voila le nom de la couche selectionnee : \n" + \
                 lyname + "\n" + \
                 "Cette couche comporte : " + fcount + " entitees \n"
-        
+
         #INSERT EVERY SIGNAL CONECTION HERE!
         QObject.connect(self.pluginGui.btnClose, SIGNAL('clicked()'), self.doClose)
         QObject.connect(self.pluginGui.btnShowMsgBox, SIGNAL('clicked()'),self.doShow)
         QObject.connect(self.pluginGui.pB_exportSVG, SIGNAL('clicked()'),self.doExportSVG)
-        
+
         self.pluginGui.textEdit.setText(expText)
         self.pluginGui.show()
 
@@ -64,11 +67,15 @@ class PluginFlux:
   def doShow(self):
     infoString = QString("Hello, Robin!")
     QMessageBox.information(self.iface.mainWindow(),"About",infoString)
-    
+
   def doExportSVG(self):
+    """
+    Fonction d'export en SVG simple, uniquement pour des segments :
+    n'exporte que la géometrie et non le style.
+    """
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
-    if (layer.wkbType() == 2):    
+    if (layer.wkbType() == 2):
         svgname = QFileDialog.getSaveFileName(None,
                                               "Choisir un nom de fichier et un repertoire",
                                               "~/output.svg",
@@ -81,17 +88,17 @@ class PluginFlux:
             allAttrs = provider.attributeIndexes()
             provider.select(allAttrs)
             feat = QgsFeature()
-            
-            
+
+
             xmin = layer.extent().xMinimum()
             xmax = layer.extent().xMaximum()
             ymin = layer.extent().yMinimum()
             ymax = layer.extent().yMaximum()
-            
+
             linesvg = '<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?> \n' + \
             '<svg xmlns="http://www.w3.org/2000/svg"' + \
             ' width="1000" height="1000" version="1.1" x="test" xmlns:xlink="http://www.w3.org/1999/xlink"  >\n \n'
-                   
+
             # Boucle pour créer le svg :
             provider.nextFeature(feat)
             for i in range(layer.featureCount()):
@@ -106,9 +113,9 @@ class PluginFlux:
                 provider.nextFeature(feat)
                 # Fin de ligne
                 linesvg += '"  />\n'
-            # Fin du fichier svg    
+            # Fin du fichier svg
             linesvg += '</svg>'
-        
+
             text_file = open(svgname, "w")
             text_file.writelines(linesvg)
             text_file.close()
