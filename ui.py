@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui.ui'
 #
-# Created: Wed Jul 27 14:45:46 2011
+# Created: Wed Aug 17 16:44:55 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -19,7 +19,7 @@ class Ui_Dialog(object):
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(594, 627)
         self.textEdit = QtGui.QTextEdit(Dialog)
-        self.textEdit.setGeometry(QtCore.QRect(10, 10, 571, 571))
+        self.textEdit.setGeometry(QtCore.QRect(10, 10, 571, 451))
         self.textEdit.setObjectName(_fromUtf8("textEdit"))
         self.btnClose = QtGui.QPushButton(Dialog)
         self.btnClose.setGeometry(QtCore.QRect(490, 590, 91, 31))
@@ -31,8 +31,17 @@ class Ui_Dialog(object):
         self.pB_exportSVG.setGeometry(QtCore.QRect(220, 590, 111, 31))
         self.pB_exportSVG.setObjectName(_fromUtf8("pB_exportSVG"))
         self.pB_Bezier = QtGui.QPushButton(Dialog)
-        self.pB_Bezier.setGeometry(QtCore.QRect(110, 590, 101, 31))
+        self.pB_Bezier.setGeometry(QtCore.QRect(480, 470, 101, 31))
         self.pB_Bezier.setObjectName(_fromUtf8("pB_Bezier"))
+        self.pB_Bezier2 = QtGui.QPushButton(Dialog)
+        self.pB_Bezier2.setGeometry(QtCore.QRect(480, 510, 101, 31))
+        self.pB_Bezier2.setObjectName(_fromUtf8("pB_Bezier2"))
+        self.cB_global = QtGui.QCheckBox(Dialog)
+        self.cB_global.setGeometry(QtCore.QRect(40, 480, 97, 22))
+        self.cB_global.setObjectName(_fromUtf8("cB_global"))
+        self.pB_exportSVGBezier = QtGui.QPushButton(Dialog)
+        self.pB_exportSVGBezier.setGeometry(QtCore.QRect(30, 520, 161, 27))
+        self.pB_exportSVGBezier.setObjectName(_fromUtf8("pB_exportSVGBezier"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -47,5 +56,8 @@ class Ui_Dialog(object):
         self.btnClose.setText(QtGui.QApplication.translate("Dialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
         self.btnShowMsgBox.setText(QtGui.QApplication.translate("Dialog", "Show MsgBox", None, QtGui.QApplication.UnicodeUTF8))
         self.pB_exportSVG.setText(QtGui.QApplication.translate("Dialog", "ExportSVG", None, QtGui.QApplication.UnicodeUTF8))
-        self.pB_Bezier.setText(QtGui.QApplication.translate("Dialog", "Bezier", None, QtGui.QApplication.UnicodeUTF8))
+        self.pB_Bezier.setText(QtGui.QApplication.translate("Dialog", "Créer CP", None, QtGui.QApplication.UnicodeUTF8))
+        self.pB_Bezier2.setText(QtGui.QApplication.translate("Dialog", "CréerBezier", None, QtGui.QApplication.UnicodeUTF8))
+        self.cB_global.setText(QtGui.QApplication.translate("Dialog", "Global ?", None, QtGui.QApplication.UnicodeUTF8))
+        self.pB_exportSVGBezier.setText(QtGui.QApplication.translate("Dialog", "ExportSVG_Bezier", None, QtGui.QApplication.UnicodeUTF8))
 

@@ -55,7 +55,8 @@ class PluginFlux:
         QObject.connect(self.pluginGui.btnShowMsgBox, SIGNAL('clicked()'),self.doShow)
         QObject.connect(self.pluginGui.pB_exportSVG, SIGNAL('clicked()'), self.doExportSVG)
         QObject.connect(self.pluginGui.pB_Bezier, SIGNAL('clicked()'), self.startBezier)
-        
+        QObject.connect(self.pluginGui.pB_Bezier2, SIGNAL('clicked()'), self.startBezier2)
+        QObject.connect(self.pluginGui.pB_exportSVGBezier, SIGNAL('clicked()'), self.doBezierSVG)
         self.pluginGui.textEdit.setText(expText)
         self.pluginGui.show()
 
@@ -73,5 +74,17 @@ class PluginFlux:
       tools.exportSVGLineaire(self)
       
   def startBezier(self):
-      print "startBezier"
+      tools.createCP(self)
+  
+  def startBezier2(self):
+      if self.pluginGui.cB_global.checkState() == 2:
+          print "Coché"
+          QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Fonction pas encore implémentée'))
+      else:
+          print "Décoché"
+          tools.createBezier(self)   
+          
+  def doBezierSVG(self):
+      print "Gogogogogo"
+      tools.createBezierSVG(self)
       
