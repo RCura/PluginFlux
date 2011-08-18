@@ -67,8 +67,10 @@ def exportSVGLineaire(self):
                 for ibis in range(len(feat.geometry().asPolyline())):
                     xfeat = feat.geometry().asPolyline()[ibis].x()
                     yfeat = feat.geometry().asPolyline()[ibis].y()
-                    xsvg = ((xfeat - xmin) / (xmax - xmin)) * 1000
-                    ysvg = ((ymax - yfeat) / (ymax - ymin)) * 1000
+                    # On multiplie par 900 (au lieu de 1000) pour réduire la taille des figurés,
+                    # puis on les décalle de 50 depuis l'origine, pour avoir 50px de marge de chaque côté.
+                    xsvg = (((xfeat - xmin) / (xmax - xmin)) * 900) + 50
+                    ysvg = (((ymax - yfeat) / (ymax - ymin)) * 900) + 50
                     # Concaténation des coords svg d'une ligne
                     linesvg += str(int(xsvg)) + "," + str(int(ysvg)) + " "
                 # Fin de ligne
@@ -164,7 +166,13 @@ def createBezier(self):
     bezierLayer = createTempLayer('LINESTRING',BezierName)
     CPpr = CPLayer.dataProvider()
     bpr = bezierLayer.dataProvider()
-    bpr.addAttributes( [ QgsField('ID', QVariant.String) ] )
+    bpr.addAttributes([ QgsField('ID', QVariant.String) ] )
+    bpr.addAttributes([ QgsField('xP0', QVariant.Double) ] )
+    bpr.addAttributes([ QgsField('yP0', QVariant.Double) ] )
+    bpr.addAttributes([ QgsField('xP1', QVariant.Double) ] )
+    bpr.addAttributes([ QgsField('yP1', QVariant.Double) ] )
+    bpr.addAttributes([ QgsField('xP2', QVariant.Double) ] )
+    bpr.addAttributes([ QgsField('yP2', QVariant.Double) ] )
     bezierLayer.startEditing()
     bezierLayer.commitChanges()
     
@@ -178,7 +186,17 @@ def createBezier(self):
         endPoint = QgsPoint(float(feat.attributeMap()[3].toString()), float(feat.attributeMap()[4].toString()))
         controlPoint = feat.geometry().asPoint()
         myfeat = createBezierLine(self, startPoint, controlPoint, endPoint)
-        myfeat.addAttribute(0,feat.attributeMap()[0].toString())
+        myfeat.setAttributeMap(
+        { 
+        0 : feat.attributeMap()[0].toString(),
+        1 : startPoint.x(),
+        2 : startPoint.y(),
+        3 : controlPoint.x(),
+        4 : controlPoint.y(),
+        5 : endPoint.x(),
+        6 : endPoint.y()
+        }
+        )
         bpr.addFeatures( [ myfeat ] )
         bezierLayer.commitChanges()
         bezierLayer.updateExtents()
@@ -216,10 +234,29 @@ def removeLayerFromQgsRegistry(layerID):
     mapR = QgsMapLayerRegistry().instance()
     mapR.removeMapLayer(layerID)
     
+def convertToSVGCoordinates(coordType, coordMin, coordMax, coordValue):
+    """
+    On entre ici les valeurs (abcisse ou ordonnée) à convertir dans le système de coordonnés SVG
+    coordType : x ou y
+    coordMin : xmin ou ymin
+    coordMax : xmax ou ymax
+    coordValue : la valeur de x ou y à convertir
+    """
+    if coordType == 'x':
+        convertedX = (((coordValue - coordMin) / (coordMax - coordMin)) * 900) + 50
+        print convertedX
+        print type(convertedX)
+        return convertedX
+    elif coordType == 'y':
+        convertedY = (((coordMax - coordValue) / (coordMax - coordMin)) * 900 ) + 50
+        return convertedY
+    else:
+        print "coordType doit être égal à 'x' ou 'y' uniquement"    
+    
 def createBezierSVG(self):
     mapC = self.iface.mapCanvas()
     layer = mapC.currentLayer()
-    if (layer.wkbType() == 2):    
+    if (layer.wkbType() == 2) and (layer.name().endsWith('_Bezier') == True) :    
         svgname = QFileDialog.getSaveFileName(None,
                                               "Choisir un nom de fichier et un repertoire",
                                               "~/BezierOutput.svg",
@@ -238,31 +275,35 @@ def createBezierSVG(self):
             ymin = layer.extent().yMinimum()
             ymax = layer.extent().yMaximum()
             
-            linesvg = '<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?> \n' + \
+            pathsvg = '<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?> \n' + \
             '<svg xmlns="http://www.w3.org/2000/svg"' + \
             ' width="1000" height="1000" version="1.1" x="test" xmlns:xlink="http://www.w3.org/1999/xlink"  >\n \n'
                    
             # Boucle pour créer le svg :
             while provider.nextFeature(feat):
-                linesvg += '<polyline style="stroke:blue; stroke-width:10; fill:none; " points="'
-                for ibis in range(len(feat.geometry().asPolyline())):
-                    xfeat = feat.geometry().asPolyline()[ibis].x()
-                    yfeat = feat.geometry().asPolyline()[ibis].y()
-                    xsvg = ((xfeat - xmin) / (xmax - xmin)) * 1000
-                    ysvg = ((ymax - yfeat) / (ymax - ymin)) * 1000
-                    # Concaténation des coords svg d'une ligne
-                    linesvg += str(int(xsvg)) + "," + str(int(ysvg)) + " "
+                pathsvg += '<path style="stroke:blue; stroke-width:10; fill:none; " d="M'
+                x1 = convertToSVGCoordinates('x', xmin, xmax, feat.attributeMap()[1].toDouble()[0])
+                y1 = convertToSVGCoordinates('y', ymin, ymax, feat.attributeMap()[2].toDouble()[0])
+                x2 = convertToSVGCoordinates('x', xmin, xmax, feat.attributeMap()[3].toDouble()[0])
+                y2 = convertToSVGCoordinates('y', ymin, ymax, feat.attributeMap()[4].toDouble()[0])
+                x3 = convertToSVGCoordinates('x', xmin, xmax, feat.attributeMap()[5].toDouble()[0])
+                y3 = convertToSVGCoordinates('y', ymin, ymax, feat.attributeMap()[6].toDouble()[0])
+                # Concaténation des coords svg d'une ligne
+                pathsvg += str(int(x1)) + "," + str(int(y1)) + " "
+                pathsvg += "Q" + str(int(x2)) + "," + str(int(y2)) + " "
+                pathsvg += str(int(x3)) + "," + str(int(y3))
                 # Fin de ligne
-                linesvg += '"  />\n'
+                pathsvg += '"  />\n'
             # Fin du fichier svg    
-            linesvg += '</svg>'
+            pathsvg += '</svg>'
         
             text_file = open(svgname, "w")
-            text_file.writelines(linesvg)
+            text_file.writelines(pathsvg)
             text_file.close()
     else:
         QMessageBox.information(self.iface.mainWindow(),"Erreur !",
                                 'L\'export SVG ne fonctionne que pour les shape type Bezier créés avec ce Plugin')
+
 
 
     

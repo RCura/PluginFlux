@@ -19,7 +19,7 @@
      <x>10</x>
      <y>10</y>
      <width>571</width>
-     <height>571</height>
+     <height>451</height>
     </rect>
    </property>
    <property name="html">
@@ -72,14 +72,53 @@ p, li { white-space: pre-wrap; }
   <widget class="QPushButton" name="pB_Bezier">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>590</y>
+     <x>480</x>
+     <y>470</y>
      <width>101</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Bezier</string>
+    <string>Créer CP</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pB_Bezier2">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>510</y>
+     <width>101</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>CréerBezier</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="cB_global">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>480</y>
+     <width>97</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Global ?</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pB_exportSVGBezier">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>520</y>
+     <width>161</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>ExportSVG_Bezier</string>
    </property>
   </widget>
  </widget>
