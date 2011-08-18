@@ -1,5 +1,5 @@
 <RCC>
-  <qresource prefix="/" >
-    <file>icon.png</file>
-  </qresource>
+    <qresource prefix="/" >
+        <file>icons/icon_plugin_flux.png</file>
+    </qresource>
 </RCC>

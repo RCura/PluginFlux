@@ -4,7 +4,7 @@ from PyQt4.QtGui import *
 
 from qgis.core import *
 from ui_control import ui_Control
-import resources_rc
+import resources
 import tools
 
 class PluginFlux:
@@ -14,7 +14,7 @@ class PluginFlux:
 
   def initGui(self):
     # create action that will start plugin configuration
-    self.action = QAction(QIcon(":/icon.png"), "PluginFlux", self.iface.mainWindow())
+    self.action = QAction(QIcon(":/icons/icon_plugin_flux.png"), "PluginFlux", self.iface.mainWindow())
     self.action.setWhatsThis("Configuration for test plugin")
     self.action.setStatusTip("This is status tip")
 

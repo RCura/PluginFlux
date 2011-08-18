@@ -5,7 +5,7 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 from ui_control import ui_Control
-import resources_rc
+import resources
     
 def testprint():
     print 'Le plugin s\'est bien lancé'
@@ -88,25 +88,29 @@ def exportSVGLineaire(self):
 def createCP(self):
     mapC = self.iface.mapCanvas()
     baseLayer = mapC.currentLayer()
-    # Si la couche est bien de type linéaire,
-    # On crée une couche ponctuelle CP.
-    if (baseLayer.wkbType() == 2):
-        layerName = baseLayer.name() + '_CP'
-        # Si la couche existe déjà, on la supprime
-        existingLayer = getMapCanvasLayerByName(self, layerName)
-        if existingLayer != None:
-            QMessageBox.information(self.iface.mainWindow(),"Attention !",
-                                'La couche existe déjà et sera donc détruite.')
-            removeLayerFromQgsRegistry(existingLayer.getLayerID())
-            
-        layerNameID = 'ID_' + baseLayer.name()
-        newLayer = createTempLayer('POINT', layerName)
-        addAttributes(self, newLayer, idFieldName=layerNameID)
-        completeAttributes(self, baseLayer, newLayer )
-    # Sinon, on affiche un message d'erreur  
-    else: 
-        QMessageBox.information(self.iface.mainWindow(),"Erreur !",
-                                'La création de courbes de Bézier requiert une couche linéaire simple')
+    if baseLayer.name().endsWith('_Bezier') == True:
+        QMessageBox.information(self.iface.mainWindow(),"Attention !",
+                                'Ne peut être réalisé sur des courbes de Bezier')
+    else:
+        # Si la couche est bien de type linéaire,
+        # On crée une couche ponctuelle CP.
+        if (baseLayer.wkbType() == 2):
+            layerName = baseLayer.name() + '_CP'
+            # Si la couche existe déjà, on la supprime
+            existingLayer = getMapCanvasLayerByName(self, layerName)
+            if existingLayer != None:
+                QMessageBox.information(self.iface.mainWindow(),"Attention !",
+                                    'La couche existe déjà et sera donc détruite.')
+                removeLayerFromQgsRegistry(existingLayer.getLayerID())
+                
+            layerNameID = 'ID_' + baseLayer.name()
+            newLayer = createTempLayer('POINT', layerName)
+            addAttributes(self, newLayer, idFieldName=layerNameID)
+            completeAttributes(self, baseLayer, newLayer )
+        # Sinon, on affiche un message d'erreur  
+        else: 
+            QMessageBox.information(self.iface.mainWindow(),"Erreur !",
+                                    'La création de courbes de Bézier requiert une couche linéaire simple')
 
 def addAttributes(self, layer, idFieldName="ID"):
     pr = layer.dataProvider()
@@ -117,6 +121,7 @@ def addAttributes(self, layer, idFieldName="ID"):
     pr.addAttributes( [ QgsField("Yend", QVariant.Double) ] )
     layer.startEditing()
     layer.commitChanges()
+    self.pluginGui.textEdit.setText('TEST 5687686567579')
 
 def completeAttributes(self, originLayer, destinationLayer):
     originPR = originLayer.dataProvider()
@@ -157,50 +162,53 @@ def createBezier(self):
     CPLayer = mapC.currentLayer()
     
     #Creation nouvelle couche
-    BezierName = CPLayer.name().remove('_CP') + '_Bezier'
-    existingLayer = getMapCanvasLayerByName(self, BezierName)
-    if existingLayer != None:
+    if CPLayer.name().endsWith('_CP') == False:
         QMessageBox.information(self.iface.mainWindow(),"Attention !",
-                            'La couche existe déjà et sera donc détruite.')
-        removeLayerFromQgsRegistry(existingLayer.getLayerID())
-    bezierLayer = createTempLayer('LINESTRING',BezierName)
-    CPpr = CPLayer.dataProvider()
-    bpr = bezierLayer.dataProvider()
-    bpr.addAttributes([ QgsField('ID', QVariant.String) ] )
-    bpr.addAttributes([ QgsField('xP0', QVariant.Double) ] )
-    bpr.addAttributes([ QgsField('yP0', QVariant.Double) ] )
-    bpr.addAttributes([ QgsField('xP1', QVariant.Double) ] )
-    bpr.addAttributes([ QgsField('yP1', QVariant.Double) ] )
-    bpr.addAttributes([ QgsField('xP2', QVariant.Double) ] )
-    bpr.addAttributes([ QgsField('yP2', QVariant.Double) ] )
-    bezierLayer.startEditing()
-    bezierLayer.commitChanges()
-    
-    #On va lire la couche des Points de controle pour peupler la nouvelle couche
-    allAttrs = CPpr.attributeIndexes()
-    CPpr.select(allAttrs)
-    feat = QgsFeature()
-    i = 1
-    while CPpr.nextFeature(feat):
-        startPoint = QgsPoint(float(feat.attributeMap()[1].toString()),float(feat.attributeMap()[2].toString()))
-        endPoint = QgsPoint(float(feat.attributeMap()[3].toString()), float(feat.attributeMap()[4].toString()))
-        controlPoint = feat.geometry().asPoint()
-        myfeat = createBezierLine(self, startPoint, controlPoint, endPoint)
-        myfeat.setAttributeMap(
-        { 
-        0 : feat.attributeMap()[0].toString(),
-        1 : startPoint.x(),
-        2 : startPoint.y(),
-        3 : controlPoint.x(),
-        4 : controlPoint.y(),
-        5 : endPoint.x(),
-        6 : endPoint.y()
-        }
-        )
-        bpr.addFeatures( [ myfeat ] )
+                            'Vous devez sélectionner une couche de Points de Contrôles')
+    else:
+        BezierName = CPLayer.name().remove('_CP') + '_Bezier'
+        existingLayer = getMapCanvasLayerByName(self, BezierName)
+        if existingLayer != None:
+            QMessageBox.information(self.iface.mainWindow(),"Attention !",
+                                'La couche existe déjà et sera donc détruite.')
+            removeLayerFromQgsRegistry(existingLayer.getLayerID())
+        bezierLayer = createTempLayer('LINESTRING',BezierName)
+        CPpr = CPLayer.dataProvider()
+        bpr = bezierLayer.dataProvider()
+        bpr.addAttributes([ QgsField('ID', QVariant.String) ] )
+        bpr.addAttributes([ QgsField('xP0', QVariant.Double) ] )
+        bpr.addAttributes([ QgsField('yP0', QVariant.Double) ] )
+        bpr.addAttributes([ QgsField('xP1', QVariant.Double) ] )
+        bpr.addAttributes([ QgsField('yP1', QVariant.Double) ] )
+        bpr.addAttributes([ QgsField('xP2', QVariant.Double) ] )
+        bpr.addAttributes([ QgsField('yP2', QVariant.Double) ] )
+        bezierLayer.startEditing()
         bezierLayer.commitChanges()
-        bezierLayer.updateExtents()
-    mapC.refresh()        
+        
+        #On va lire la couche des Points de controle pour peupler la nouvelle couche
+        allAttrs = CPpr.attributeIndexes()
+        CPpr.select(allAttrs)
+        feat = QgsFeature()
+        while CPpr.nextFeature(feat):
+            startPoint = QgsPoint(float(feat.attributeMap()[1].toString()),float(feat.attributeMap()[2].toString()))
+            endPoint = QgsPoint(float(feat.attributeMap()[3].toString()), float(feat.attributeMap()[4].toString()))
+            controlPoint = feat.geometry().asPoint()
+            myfeat = createBezierLine(self, startPoint, controlPoint, endPoint)
+            myfeat.setAttributeMap(
+            { 
+            0 : feat.attributeMap()[0].toString(),
+            1 : startPoint.x(),
+            2 : startPoint.y(),
+            3 : controlPoint.x(),
+            4 : controlPoint.y(),
+            5 : endPoint.x(),
+            6 : endPoint.y()
+            }
+            )
+            bpr.addFeatures( [ myfeat ] )
+            bezierLayer.commitChanges()
+            bezierLayer.updateExtents()
+        mapC.refresh()        
     
 def createBezierLine(self, startPoint, controlPoint, endPoint, nbSegments=20):
     # Creation d'un rubberband
