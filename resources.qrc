@@ -2,4 +2,7 @@
     <qresource prefix="/" >
         <file>icons/icon_plugin_flux.png</file>
     </qresource>
+    <qresource prefix="/" >
+        <file>icons/icon_Bezier.png</file>
+    </qresource>
 </RCC>

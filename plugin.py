@@ -1,10 +1,18 @@
 # -*- coding: latin1 -*-
+
+# Import des libs PyQt
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+# Import des libs Qgis
 from qgis.core import *
-from ui_control import ui_Control
+from qgis.gui import *
+
+# Import des resources Qt
 import resources
+
+# Import des libs du plugin
+from ui_control import ui_Control
 import tools
 
 class PluginFlux:
@@ -20,15 +28,30 @@ class PluginFlux:
 
     # connect the action to the run method
     QObject.connect(self.action, SIGNAL("activated()"), self.run)
+    
+    # on ajoute l'outil Bezier
+    self.BezierTool = QAction(QIcon(":/icons/icon_Bezier.png"), "BezierTool", self.iface.mainWindow())
+    self.BezierTool.setWhatsThis("Outil de construction de courbes de Bezier")
+    self.BezierTool.setStatusTip("Status tip, a voir")
+    QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.testrun)
 
     # add toolbar button and menu item
     self.iface.addToolBarIcon(self.action)
+    self.iface.addToolBarIcon(self.BezierTool)
     self.iface.addPluginToMenu("&PluginFlux", self.action)
+    self.iface.addPluginToMenu("&PluginFlux", self.BezierTool)
+    
+
+
 
   def unload(self):
     # remove the plugin menu item and icon
     self.iface.removePluginMenu("&PluginFlux",self.action)
     self.iface.removeToolBarIcon(self.action)
+    
+    # on enleve aussi l'outil Bezier
+    self.iface.removePluginMenu("&PluginFlux", self.BezierTool)
+    self.iface.removeToolBarIcon(self.BezierTool)
 
   def run(self):
     # create and show a configuration dialog or something similar
@@ -87,4 +110,6 @@ class PluginFlux:
   def doBezierSVG(self):
       print "Gogogogogo"
       tools.createBezierSVG(self)
-      
+  
+  def testrun(self):
+      print "Test du testrun"
