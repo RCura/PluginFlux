@@ -1,5 +1,33 @@
 # -*- coding: latin1 -*-
 
+"""
+/***************************************************************************
+PluginFlux
+A QGIS plugin dedicated to Flow Mapping
+Offers some tools for flow mapping
+                             -------------------
+begin                : 2011-07-11
+copyright            : (C) 2011 by Robin Cura
+email                : robin.cura@gmail.com 
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+BUGS:
+
+
+TODO :
+
+
+"""
+
 # Import des libs PyQt
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -14,6 +42,8 @@ import resources
 # Import des libs du plugin
 from ui_control import ui_Control
 import tools
+from createBeziertool import CreateBezierTool
+import createBezier
 
 class PluginFlux:
 
@@ -112,4 +142,7 @@ class PluginFlux:
       tools.createBezierSVG(self)
   
   def testrun(self):
-      print "Test du testrun"
+      abc = CreateBezierTool(self)
+      
+  def testprint(self):
+      print "testprint appelé par createBeziertool, lui même appelé par plugin, contenu dans plugin"

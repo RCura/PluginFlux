@@ -1,5 +1,9 @@
 # -*- coding: latin1 -*-
 
+"""
+Bibliothèque de fonctions basiques
+"""
+
 # Import des libs PyQt
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -13,8 +17,12 @@ import resources
 
 # Import des libs du plugin
 from ui_control import ui_Control
+
+
+
     
-def testprint():
+def testprint(self):
+    print self
     print 'Le plugin s\'est bien lancé'
     
 def createTempLayer(layerType, layerName):
