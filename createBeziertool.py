@@ -23,6 +23,7 @@ class CreateBezierTool():
     
     def __init__(self, plugin):
         plugin.testprint()
+        abc = 12
         ## Save reference to the QGIS interface.
                          
     def initGui(self):

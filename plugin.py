@@ -3,8 +3,10 @@
 """
 /***************************************************************************
 PluginFlux
-A QGIS plugin dedicated to Flow Mapping
-Offers some tools for flow mapping
+A QGIS plugin dedicated to Flow Mapping.
+Offers some tools for flow mapping, like Clustering, great-circles flows, 
+Bezier curves, SVG export.
+Developed by Robin Cura on behalf of Geographie-cités geography laboratory.
                              -------------------
 begin                : 2011-07-11
 copyright            : (C) 2011 by Robin Cura
@@ -43,14 +45,18 @@ import resources
 from ui_control import ui_Control
 import tools
 from createBeziertool import CreateBezierTool
+from nearestfeaturetool import SelectNearestFeature
 import createBezier
 
 class PluginFlux:
 
   def __init__(self, iface):
     self.iface = iface
+    self.canvas = self.iface.mapCanvas()
+    self.abc = 123
 
   def initGui(self):
+    self.mapC = self.iface.mapCanvas()
     # create action that will start plugin configuration
     self.action = QAction(QIcon(":/icons/icon_plugin_flux.png"), "PluginFlux", self.iface.mainWindow())
     self.action.setWhatsThis("Configuration for test plugin")
@@ -61,9 +67,11 @@ class PluginFlux:
     
     # on ajoute l'outil Bezier
     self.BezierTool = QAction(QIcon(":/icons/icon_Bezier.png"), "BezierTool", self.iface.mainWindow())
+    self.BezierTool.setCheckable(True)
     self.BezierTool.setWhatsThis("Outil de construction de courbes de Bezier")
     self.BezierTool.setStatusTip("Status tip, a voir")
-    QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.testrun)
+    QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.runBezier)
+    QObject.connect(self.mapC, SIGNAL("mapToolSet(QgsMapTool*)"), self.deactivateBezier)
 
     # add toolbar button and menu item
     self.iface.addToolBarIcon(self.action)
@@ -72,7 +80,7 @@ class PluginFlux:
     self.iface.addPluginToMenu("&PluginFlux", self.BezierTool)
     
 
-
+    
 
   def unload(self):
     # remove the plugin menu item and icon
@@ -85,8 +93,9 @@ class PluginFlux:
 
   def run(self):
     # create and show a configuration dialog or something similar
-    flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMaximizeButtonHint  # QgisGui.ModalDialogFlags
+    flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
     self.pluginGui = ui_Control(self.iface.mainWindow(), flags)
+    self.pluginGui.setWindowTitle('PluginFlux - Version pre-alpha')
     
     # On crée nos variables pour explorer les couches[...]
     mapC = self.iface.mapCanvas()
@@ -112,18 +121,19 @@ class PluginFlux:
         QObject.connect(self.pluginGui.pB_exportSVGBezier, SIGNAL('clicked()'), self.doBezierSVG)
         self.pluginGui.textEdit.setText(expText)
         self.pluginGui.show()
+    
 
   def doClose(self):
     self.pluginGui.reject()
 
   def doShow(self):
-    infoString = QString("Hello, Robin!")
+    
+    infoString = QString("Hello, Robin !!!")
+
     QMessageBox.information(self.iface.mainWindow(),"About",infoString)
-    tools.testprint()
             
 
   def doExportSVG(self):
-      
       tools.exportSVGLineaire(self)
       
   def startBezier(self):
@@ -141,8 +151,30 @@ class PluginFlux:
       print "Gogogogogo"
       tools.createBezierSVG(self)
   
-  def testrun(self):
-      abc = CreateBezierTool(self)
       
   def testprint(self):
       print "testprint appelé par createBeziertool, lui même appelé par plugin, contenu dans plugin"
+      
+      
+  def runBezier(self):
+        mc = self.canvas
+        layer = mc.currentLayer()
+    
+        self.tool = SelectNearestFeature(self.canvas)                 
+        mc.setMapTool(self.tool)
+        self.BezierTool.setChecked(True)      
+        
+        QObject.connect(self.tool, SIGNAL("featureFound(PyQt_PyObject)"), self.selectFeature)                
+                   
+
+  def selectFeature(self, result):
+    for i in range(self.canvas.layerCount()):
+        displayedLayer = self.canvas.layers()[i]
+        displayedLayer.removeSelection()
+    layer = result[0]
+    idfeature = result[1]
+    layer.select(idfeature)
+    self.canvas.refresh()    
+
+  def deactivateBezier(self):
+      self.BezierTool.setChecked(False)
