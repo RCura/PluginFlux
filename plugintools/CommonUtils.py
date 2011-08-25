@@ -17,12 +17,11 @@ class FlowUtils:
     """ 
     Regroupe les outils/fonctions appelées dans les classes principales
     """
-
+    
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
-        
-            
+                 
     def createTempLayer(self, layerType, layerName):
         """
         Crée une couche temporaire (stockage mémoire).
@@ -33,8 +32,7 @@ class FlowUtils:
         tmpLayer.updateExtents()
         QgsMapLayerRegistry().instance().addMapLayer(tmpLayer, True)
         return tmpLayer
-         
-                
+          
     def getMapCanvasLayerByName(self, layername):
         layers = self.canvas.layers()  
         for i in range(self.canvas.layerCount()):
@@ -45,16 +43,15 @@ class FlowUtils:
                     return None
             else:
                 return None            
-                
+                    
     def exportSVGLineaire(self):
-
         layer = self.canvas.currentLayer()
         if (layer.wkbType() == 2):    
             svgname = QFileDialog.getSaveFileName(None,
-                                                  "Choisir un nom de fichier et un repertoire",
-                                                  "~/output.svg",
-                                                  "*.svg"
-                                                  )
+            "Choisir un nom de fichier et un repertoire",
+            "~/output.svg",
+            "*.svg"
+            )
             if (svgname == ''):
                 QMessageBox.information(self.iface.mainWindow(),"Erreur !",'On annule tout')
             else:
