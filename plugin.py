@@ -26,6 +26,8 @@ BUGS:
 
 
 TODO :
+- Soucis dans le passage de MapTools : Fonctionne avec la main,  mais pas avec les zooms+/-
+- Outil SelectNearestFeature : Un point ne sera jamais selectionné pk plus loin qu'une ligne, a corriger.
 
 
 """
@@ -41,22 +43,29 @@ from qgis.gui import *
 # Import des resources Qt
 import resources
 
+import webbrowser, os
+import os.path, sys
+
+# Set up current path.
+currentPath = os.path.dirname( __file__ )
+
 # Import des libs du plugin
 from ui_control import ui_Control
-import tools
-from createBeziertool import CreateBezierTool
-from nearestfeaturetool import SelectNearestFeature
-import createBezier
+
+from plugintools.CommonUtils import FlowUtils
+from plugintools.nearestfeaturetool import SelectNearestFeature
 
 class PluginFlux:
+    """
+    Classe principale du plugin, définit l'interface et les actions.
+    """
 
   def __init__(self, iface):
+      
     self.iface = iface
     self.canvas = self.iface.mapCanvas()
-    self.abc = 123
 
   def initGui(self):
-    self.mapC = self.iface.mapCanvas()
     # create action that will start plugin configuration
     self.action = QAction(QIcon(":/icons/icon_plugin_flux.png"), "PluginFlux", self.iface.mainWindow())
     self.action.setWhatsThis("Configuration for test plugin")
@@ -69,9 +78,9 @@ class PluginFlux:
     self.BezierTool = QAction(QIcon(":/icons/icon_Bezier.png"), "BezierTool", self.iface.mainWindow())
     self.BezierTool.setCheckable(True)
     self.BezierTool.setWhatsThis("Outil de construction de courbes de Bezier")
-    self.BezierTool.setStatusTip("Status tip, a voir")
-    QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.runBezier)
-    QObject.connect(self.mapC, SIGNAL("mapToolSet(QgsMapTool*)"), self.deactivateBezier)
+    
+    QObject.connect(self.canvas, SIGNAL("mapToolSet(QgsMapTool*)"), self.deactivateBezier) # Si un autre outil est selectionné
+    QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.runBezier) # Chargement de l'outil Bezier
 
     # add toolbar button and menu item
     self.iface.addToolBarIcon(self.action)
@@ -98,8 +107,7 @@ class PluginFlux:
     self.pluginGui.setWindowTitle('PluginFlux - Version pre-alpha')
     
     # On crée nos variables pour explorer les couches[...]
-    mapC = self.iface.mapCanvas()
-    layer = mapC.currentLayer()
+    layer = self.canvas.currentLayer()
     if (layer == None):
         QMessageBox.information(self.iface.mainWindow(),"About","Aucune couche n'est chargee")
     else:  
@@ -134,10 +142,10 @@ class PluginFlux:
             
 
   def doExportSVG(self):
-      tools.exportSVGLineaire(self)
+      FlowUtils(self.iface).exportSVGLineaire()
       
   def startBezier(self):
-      tools.createCP(self)
+      FlowUtils(self.iface).createCP()
   
   def startBezier2(self):
       if self.pluginGui.cB_global.checkState() == 2:
@@ -145,36 +153,32 @@ class PluginFlux:
           QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Fonction pas encore implémentée'))
       else:
           print "Décoché"
-          tools.createBezier(self)   
+          FlowUtils(self.iface).createBezier()   
           
   def doBezierSVG(self):
-      print "Gogogogogo"
-      tools.createBezierSVG(self)
+        FlowUtils(self.iface).createBezierSVG()
   
-      
-  def testprint(self):
-      print "testprint appelé par createBeziertool, lui même appelé par plugin, contenu dans plugin"
       
       
   def runBezier(self):
-        mc = self.canvas
-        layer = mc.currentLayer()
-    
-        self.tool = SelectNearestFeature(self.canvas)                 
-        mc.setMapTool(self.tool)
-        self.BezierTool.setChecked(True)      
-        
-        QObject.connect(self.tool, SIGNAL("featureFound(PyQt_PyObject)"), self.selectFeature)                
-                   
+      
+      if self.canvas.layerCount() != 0:
+          self.tool = SelectNearestFeature(self.canvas)                 
+          self.canvas.setMapTool(self.tool)
+          self.BezierTool.setChecked(True)      
+          QObject.connect(self.tool, SIGNAL("featureFound(PyQt_PyObject)"), self.selectFeature)
+      else:
+          QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Aucune couche n\'est chargée'))
+          self.BezierTool.setChecked(False)
 
   def selectFeature(self, result):
-    for i in range(self.canvas.layerCount()):
-        displayedLayer = self.canvas.layers()[i]
-        displayedLayer.removeSelection()
-    layer = result[0]
-    idfeature = result[1]
-    layer.select(idfeature)
-    self.canvas.refresh()    
+        layer = result[0]
+        idfeature = result[1]
+        for i in range(self.canvas.layerCount()):
+            displayedLayer = self.canvas.layers()[i]
+            displayedLayer.removeSelection(False)
+        layer.select(idfeature, False)
+        self.canvas.refresh()
 
   def deactivateBezier(self):
       self.BezierTool.setChecked(False)
