@@ -7,6 +7,8 @@ A QGIS plugin dedicated to Flow Mapping.
 Offers some tools for flow mapping, like Clustering, great-circles flows, 
 Bezier curves, SVG export.
 Developed by Robin Cura on behalf of Geographie-cités geography laboratory.
+http://www.parisgeo.cnrs.fr/
+
                              -------------------
 begin                : 2011-07-11
 copyright            : (C) 2011 by Robin Cura
@@ -27,7 +29,6 @@ BUGS:
 
 TODO :
 - Soucis dans le passage de MapTools : Fonctionne avec la main,  mais pas avec les zooms+/-
-- Outil SelectNearestFeature : Un point ne sera jamais selectionné pk plus loin qu'une ligne, a corriger.
 
 
 """
@@ -168,6 +169,7 @@ class PluginFlux:
             displayedLayer.removeSelection(False)
         layer.select(idfeature, False)
         self.canvas.refresh()
+        print "selection"
     
     def deactivateBezier(self):
         self.BezierTool.setChecked(False)

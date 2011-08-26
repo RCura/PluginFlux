@@ -46,6 +46,17 @@ class SelectNearestFeature(QgsMapTool):
         clickedCoords = self.toLayerCoordinates( layer, event.pos() )
         bestLayer, bestFeatureID = self.findNearestFeature(clickedCoords)
         self.emit( SIGNAL( "featureFound(PyQt_PyObject)" ), [bestLayer, bestFeatureID] )
+        # La feature est maintenant selectionnée, et on peut lui appliquer nos traitements
+        ## Si Type geom Layer == Ligne simple ET Layer.name() non fini par _BEZIER
+        ### Move -> Deplacement du point
+        ### Relachement -> Creation d'un CP : Couche puis 1 CP (uniquement sur ce segment)
+        ## Si Type geom Layer == Point et layer.name() fini par "_CP"
+        ### Creation Bezier
+        ### Move -> Deplacement CP + actualisation bezier (rb)
+        ### release -> Actualisation Bezier (shape, destruction rb)
+        ## Si Type geom Layer == Ligne et layer.name() fini par "_Bezier"
+        ### 
+        
       
     def canvasMoveEvent(self,event):
         pass
@@ -84,12 +95,16 @@ class SelectNearestFeature(QgsMapTool):
             myclick = QgsGeometry.fromPoint(clickedcoords)
             otherfeat = QgsFeature()
              
-            if myLayer.geometryType == 0:
+            if myLayer.geometryType() == 0:
                 while provider.nextFeature(feat):
                     sindex.insertFeature(feat)    
                     nearest = sindex.nearestNeighbor(clickedcoords, 1)
                     myLayer.featureAtId(nearest[0], otherfeat, True, True)
-                    currentDistance = myclick.distance( otherfeat.geometry() )
+                    # Modif un peu sale :
+                    # On ne peut selectionner un point situé sur une ligne
+                    # Car il faudrait cliquer exactement dessus
+                    # Donc on diminue arbitrairement la distance réelle entre le point et le clic
+                    currentDistance = myclick.distance( otherfeat.geometry() ) * 0.9
                     if currentDistance < minDist:
                         minDist = currentDistance
                         minId = nearest[0]
