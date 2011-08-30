@@ -214,7 +214,7 @@ class FlowUtils:
                 bezierLayer.updateExtents()
             self.canvas.refresh()        
         
-    def createBezierLine(self, startPoint, controlPoint, endPoint, nbSegments=10):
+    def createBezierLine(self, startPoint, controlPoint, endPoint, nbSegments=30):
         # Creation d'un rubberband
         rb = QgsRubberBand(self.canvas,  True)
         # Creation du LineString
