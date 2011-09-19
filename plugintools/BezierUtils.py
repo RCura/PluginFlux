@@ -38,21 +38,22 @@ class BezierUtils:
                         pass
                     # Sinon, si ligne simple :    
                     elif (test ligne simple):
+                        pass
                         # Si couche CP inexistante :
-                            if (FlowUtils(self.iface).getMapCanvasLayerByName(selectedLayer.name()+'_CP') == None):
-                                # Création couche CP
-                                # Création CP sur la ligne selectionnée
-                                pass
+                        if (FlowUtils(self.iface).getMapCanvasLayerByName(selectedLayer.name()+'_CP') == None):
+                            # Création couche CP
+                            # Création CP sur la ligne selectionnée
+                            pass
                             # Si couche CP existante :     
-                            else:
+                        else:
                                 # Si CP sur ligne n'existe pas :
-                                if (testCPsurligne):
-                                    # Creation CP + mode edition
-                                    pass
+                            if (testCPsurligne):
+                                # Creation CP + mode edition
+                                pass
                                 # Si CP sur ligne existe :
-                                else:
-                                    # Selection du CP + mode edition
-                                    pass
+                            else:
+                                # Selection du CP + mode edition
+                                pass
                 # Si point CP
                 elif (testPointCP):
                     # Mode edition
