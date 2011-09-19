@@ -46,16 +46,6 @@ class SelectNearestFeature(QgsMapTool):
         clickedCoords = self.toLayerCoordinates( layer, event.pos() )
         bestLayer, bestFeatureID = self.findNearestFeature(clickedCoords)
         self.emit( SIGNAL( "featureFound(PyQt_PyObject)" ), [bestLayer, bestFeatureID] )
-        # La feature est maintenant selectionnée, et on peut lui appliquer nos traitements
-        ## Si Type geom Layer == Ligne simple ET Layer.name() non fini par _BEZIER
-        ### Move -> Deplacement du point
-        ### Relachement -> Creation d'un CP : Couche puis 1 CP (uniquement sur ce segment)
-        ## Si Type geom Layer == Point et layer.name() fini par "_CP"
-        ### Creation Bezier
-        ### Move -> Deplacement CP + actualisation bezier (rb)
-        ### release -> Actualisation Bezier (shape, destruction rb)
-        ## Si Type geom Layer == Ligne et layer.name() fini par "_Bezier"
-        ### 
         
       
     def canvasMoveEvent(self,event):
@@ -80,6 +70,8 @@ class SelectNearestFeature(QgsMapTool):
         return True
                     
     def findNearestFeature(self, clickedcoords):
+        minLayer = None
+        minId = None
         layers = self.canvas.layers()
         minDist = float('inf')
         for i in range(len(layers)): 
@@ -118,12 +110,3 @@ class SelectNearestFeature(QgsMapTool):
                         minId = feat.id()
                         minLayer = myLayer
         return minLayer, minId
-            
-    def selectFeature(self, result):
-        layer = result[0]
-        idfeature = result[1]
-        for i in range(self.canvas.layerCount()):
-            displayedLayer = self.canvas.layers()[i]
-            displayedLayer.removeSelection(False)
-        layer.select(idfeature, False)
-        self.canvas.refresh()

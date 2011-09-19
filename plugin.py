@@ -55,6 +55,7 @@ from ui_control import ui_Control
 
 from plugintools.CommonUtils import FlowUtils
 from plugintools.nearestfeaturetool import SelectNearestFeature
+from plugintools.BezierUtils import BezierUtils
 
 class PluginFlux:
     """
@@ -169,7 +170,14 @@ class PluginFlux:
             displayedLayer.removeSelection(False)
         layer.select(idfeature, False)
         self.canvas.refresh()
-        print "selection"
+        # Maintenant, on appelle, dans BezierUtils, les fonctions qui vont permettre d'agir depuis la selection
+        BezierUtils(self.iface).repartitionActions(layer, idfeature)
+        
+        
     
     def deactivateBezier(self):
         self.BezierTool.setChecked(False)
+        for i in range(self.canvas.layerCount()):
+            displayedLayer = self.canvas.layers()[i]
+            displayedLayer.removeSelection(False)
+        self.canvas.refresh()
