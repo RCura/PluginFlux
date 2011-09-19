@@ -44,8 +44,10 @@ from qgis.gui import *
 # Import des resources Qt
 import resources
 
-import webbrowser, os
-import os.path, sys
+import webbrowser
+import os
+import os.path
+import sys
 
 # Set up current path.
 currentPath = os.path.dirname( __file__ )
@@ -172,7 +174,6 @@ class PluginFlux:
         self.canvas.refresh()
         # Maintenant, on appelle, dans BezierUtils, les fonctions qui vont permettre d'agir depuis la selection
         BezierUtils(self.iface).repartitionActions(layer, idfeature)
-        
         
     
     def deactivateBezier(self):

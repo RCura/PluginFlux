@@ -29,36 +29,26 @@ class BezierUtils:
         # Si type de couche = Ligne ou (Point et CP)
         if ( (selectedLayer.wkbType() == 2) or \
             ( (selectedLayer.wkbType() == 1) and (selectedLayer.name().endsWith('_CP') == True) ) ):
-                pass
-                # Si ligne :
-                if (selectedLayer.wkbType() == 2):
-                    # Si nom contient Bezier
-                    if (selectedLayer.name().endsWith('_CP') == True):
-                        # Selection du CP associé et mode edition
+            if (selectedLayer.wkbType() == 2): # Si ligne
+                if (selectedLayer.name().endsWith('_Bezier') == True): # Si nom contient Bezier
+                    # Selection du CP associé et mode edition
+                    pass
+                elif (FlowUtils(self.iface).isSimpleLineLayer(selectedLayer) == True): # Sinon, si ligne simple 
+                    if (FlowUtils(self.iface).getMapCanvasLayerByName(selectedLayer.name()+'_CP') == None): # Si couche CP inexistante
+                        # Création couche CP
+                        # Création CP sur la ligne selectionnée
                         pass
-                    # Sinon, si ligne simple :    
-                    elif (test ligne simple):
-                        pass
-                        # Si couche CP inexistante :
-                        if (FlowUtils(self.iface).getMapCanvasLayerByName(selectedLayer.name()+'_CP') == None):
-                            # Création couche CP
-                            # Création CP sur la ligne selectionnée
+                    else: # Si couche CP existante
+                        CPcorrespondant = FlowUtils(self.iface).attachedCP(selectedLayer, selectedFeature)
+                        if (CPcorrespondant == None): # Si CP sur ligne n'existe pas
+                            # Creation CP + mode edition
                             pass
-                            # Si couche CP existante :     
-                        else:
-                                # Si CP sur ligne n'existe pas :
-                            if (testCPsurligne):
-                                # Creation CP + mode edition
-                                pass
-                                # Si CP sur ligne existe :
-                            else:
-                                # Selection du CP + mode edition
-                                pass
-                # Si point CP
-                elif (testPointCP):
+                        else: # Si CP sur ligne existe
+                            # Selection du CP + mode edition
+                            pass
+            elif ( (selectedLayer.wkbType() == 1) and (selectedLayer.name().endsWith('_CP') == True) ): # Si point CP
                     # Mode edition
                     pass
-        # Sinon :
         else:
             # Message d'avertissement
             print "fail" 

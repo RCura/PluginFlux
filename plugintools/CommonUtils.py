@@ -313,5 +313,22 @@ class FlowUtils:
                                     'L\'export SVG ne fonctionne que pour les shape type Bezier créés avec ce Plugin')
 
 
-
+    def isSimpleLineLayer(self, layer):
+        provider = layer.dataProvider()
+        allAttrs = provider.attributeIndexes()
+        provider.select(allAttrs)
+        feat = QgsFeature()
+        isSimple = True
+        while provider.nextFeature(feat):
+            if (len(feat.geometry().asPolyline()) > 2):
+                return False
+        return True
     
+    def attachedCP(self, layer, idfeature):
+        """
+        S'execute sur une couche de type ligne simple :
+        Cherche s'il existe un CP correspondant à l'entité ligne selectionnée
+        """
+        # regarder du côté de mylayer.featureAtId(Idfeat, featquireçoit)
+        
+
