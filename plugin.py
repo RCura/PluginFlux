@@ -28,7 +28,8 @@ BUGS:
 
 
 TODO :
-- Soucis dans le passage de MapTools : Fonctionne avec la main,  mais pas avec les zooms+/-
+- Comportement OK
+- Ajout des manipulations
 
 
 """

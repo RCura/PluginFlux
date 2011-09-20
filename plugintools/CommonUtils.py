@@ -39,10 +39,7 @@ class FlowUtils:
             if layers[i].name() == layername:
                 if layers[i].isValid():
                     return layers[i]
-                else:
-                    return None
-            else:
-                return None            
+        return None            
                     
     def exportSVGLineaire(self):
         layer = self.canvas.currentLayer()
@@ -108,9 +105,9 @@ class FlowUtils:
                 if existingLayer != None:
                     QMessageBox.information(self.iface.mainWindow(),"Attention !",
                                         'La couche existe déjà et sera donc détruite.')
-                    removeLayerFromQgsRegistry(existingLayer.getLayerID())
+                    self.removeLayerFromQgsRegistry(existingLayer.getLayerID())
                     
-                layerNameID = 'ID_' + baseLayer.name()
+                layerNameID = 'ID'
                 newLayer = self.createTempLayer('POINT', layerName)
                 self.addAttributes(newLayer, idFieldName=layerNameID)
                 self.completeAttributes(baseLayer, newLayer )
@@ -175,7 +172,7 @@ class FlowUtils:
             if existingLayer != None:
                 QMessageBox.information(self.iface.mainWindow(),"Attention !",
                                     'La couche existe déjà et sera donc détruite.')
-                removeLayerFromQgsRegistry(existingLayer.getLayerID())
+                self.removeLayerFromQgsRegistry(existingLayer.getLayerID())
             bezierLayer = self.createTempLayer('LINESTRING',BezierName)
             CPpr = CPLayer.dataProvider()
             bpr = bezierLayer.dataProvider()
@@ -241,7 +238,7 @@ class FlowUtils:
         rb.reset()
         return newFeat
             
-    def removeLayerFromQgsRegistry(layerID):
+    def removeLayerFromQgsRegistry(self, layerID):
         mapR = QgsMapLayerRegistry().instance()
         mapR.removeMapLayer(layerID)
         
@@ -324,11 +321,33 @@ class FlowUtils:
                 return False
         return True
     
-    def attachedCP(self, layer, idfeature):
+
+    def getFieldNbByName(self, layer, fieldName):
+        provider = layer.dataProvider()
+        provider.select(provider.attributeIndexes())
+        for i in range(len(provider.fields())):
+            if (str(provider.fields()[i].name()) == fieldName):
+                return i
+        # Pas de fieldname correspondant
+        return None
+        
+    def attachedCP(self, layer, myIdFeature):
         """
         S'execute sur une couche de type ligne simple :
         Cherche s'il existe un CP correspondant à l'entité ligne selectionnée
+        returns None s'il n'y en a pas, returns layer + myIdFeature s'il y a.
         """
-        # regarder du côté de mylayer.featureAtId(Idfeat, featquireçoit)
+        CPLayerName = str(layer.name()) + '_CP'
+        CPLayer = self.getMapCanvasLayerByName(CPLayerName)
+        CPpr = CPLayer.dataProvider()
+        CPpr.select(CPpr.attributeIndexes())
+        feat = QgsFeature()
+        myfield = int(self.getFieldNbByName(CPLayer, "ID"))
+        while CPpr.nextFeature(feat):
+            featId = str(feat.attributeMap()[myfield].toString())
+            if ( featId == str(myIdFeature) ):
+                return CPLayer, myIdFeature, feat
+        return None
+    
         
-
+ 
