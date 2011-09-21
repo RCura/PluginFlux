@@ -11,6 +11,7 @@ from PyQt4.QtGui import *
 # Import des libs Qgis
 from qgis.core import *
 from qgis.gui import *
+import pdb
 
 
 class FlowUtils:

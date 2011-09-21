@@ -7,17 +7,27 @@ from PyQt4.QtGui import *
 # Import des libs Qgis
 from qgis.core import *
 from qgis.gui import *
+import pdb
+
+import BezierUtils
+
 
 class SelectNearestFeature(QgsMapTool):
     """
     Outil de selection de la feature la plus proche du clic, dans l'ensemble des couches affichées.
     Based on Stefan Ziegler Nearest Plugin, thanks to him.
     """
-            
+    
+    # W00T !!!!! Argument-typing in Python
+    featureFound = pyqtSignal(list)
+    
+    
     def __init__(self, canvas):
         QgsMapTool.__init__(self,canvas)
         self.canvas = canvas
         self.index = None
+        self.clicked = False
+        self.testvalue = False
         
         ## Our own fancy cursor.
         self.cursor = QCursor(QPixmap(["16 16 3 1",
@@ -42,17 +52,36 @@ class SelectNearestFeature(QgsMapTool):
           "       +.+      "]))
                                       
     def canvasPressEvent(self,event):
+        self.clicked = True
         layer = self.canvas.currentLayer()
         clickedCoords = self.toLayerCoordinates( layer, event.pos() )
         bestLayer, bestFeatureID = self.findNearestFeature(clickedCoords)
-        self.emit( SIGNAL( "featureFound(PyQt_PyObject)" ), [bestLayer, bestFeatureID] )
+        self.featureFound.emit([bestLayer, bestFeatureID])
         
-      
     def canvasMoveEvent(self,event):
-        pass
-      
+        if (self.clicked == False):
+            pass
+        else:
+            layer = self.canvas.currentLayer()
+            #print event.pos(),
+            #print event.button(),
+            #print event.x(),
+            #print event.globalPos(),
+            #print
+            #print self.testvalue
+        BezierUtils.BezierUtils(self.iface).typeCouche.connect(self.test2)
+        #clickedCoords = self.toLayerCoordinates(layer, event.pos())
+        #print clickedCoords
+    
+    def test2(self, int):
+        print int
+    
+    def test(self, elem1):
+        print self.clicked
+    
     def canvasReleaseEvent(self,event):
         pass
+        self.clicked = False
                 
     def activate(self):
         self.canvas.setCursor(self.cursor)

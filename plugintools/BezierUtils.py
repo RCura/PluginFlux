@@ -13,19 +13,23 @@ from qgis.core import *
 from qgis.gui import *
 from CommonUtils import FlowUtils
 from nearestfeaturetool import SelectNearestFeature
+import pdb
 
 
 class BezierUtils:
     """ 
     Regroupe les outils/fonctions appelées dans les classes principales
     """
-    
+    typeCouche = pyqtSignal(int)
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
     
     def repartitionActions(self, selectedLayer, selectedFeature):
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()        
         # Si type de couche = Ligne ou (Point et CP)
+        SelectNearestFeature(self.canvas).testvalue = True
         if ( (selectedLayer.wkbType() == 2) or \
             ( (selectedLayer.wkbType() == 1) and (selectedLayer.name().endsWith('_CP') == True) ) ):
             if (selectedLayer.wkbType() == 2): # Si ligne
@@ -38,6 +42,7 @@ class BezierUtils:
                         # Création couche CP
                         # Création CP sur la ligne selectionnée
                         pass
+                        self.typeCouche().emit(3)
                         print 3
                     else: # Si couche CP existante
                         CPcorrespondant = FlowUtils(self.iface).attachedCP(selectedLayer, selectedFeature)

@@ -45,10 +45,9 @@ from qgis.gui import *
 # Import des resources Qt
 import resources
 
-import webbrowser
 import os
 import os.path
-import sys
+import pdb
 
 # Set up current path.
 currentPath = os.path.dirname( __file__ )
@@ -160,7 +159,7 @@ class PluginFlux:
             self.tool = SelectNearestFeature(self.canvas)                 
             self.canvas.setMapTool(self.tool)
             self.BezierTool.setChecked(True)      
-            QObject.connect(self.tool, SIGNAL("featureFound(PyQt_PyObject)"), self.selectFeature)
+            self.tool.featureFound.connect(self.selectFeature)
         else:
             QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Aucune couche n\'est chargée'))
             self.BezierTool.setChecked(False)
@@ -173,7 +172,7 @@ class PluginFlux:
             displayedLayer.removeSelection(False)
         layer.select(idfeature, False)
         self.canvas.refresh()
-        # Maintenant, on appelle, dans BezierUtils, les fonctions qui vont permettre d'agir depuis la selection
+        
         BezierUtils(self.iface).repartitionActions(layer, idfeature)
         
     
