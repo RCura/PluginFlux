@@ -9,7 +9,8 @@ from qgis.core import *
 from qgis.gui import *
 import pdb
 
-import BezierUtils
+# A decommenter !!!!!
+# import BezierUtils
 
 
 class SelectNearestFeature(QgsMapTool):
