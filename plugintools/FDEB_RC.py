@@ -141,3 +141,103 @@ class FDEB_SR:
                     
                 Csum =  CSum + abs(C)
                 numTotal = numTotal + 1
+
+
+    def calcEdgeCompatibility(self,i,j):
+        C = 0.0
+        
+        #if (params.getUseSimpleCompatibilityMeasure()) {
+        #    C = calcSimpleEdgeCompatibility(i, j);
+        #} else {
+        C = calcStandardEdgeCompatibility(i, j)
+        #}
+
+        assert (C >= 0 and C <= 1.0)
+        # if (params.getBinaryCompatibility()) {
+        #    if (C >= params.getEdgeCompatibilityThreshold()) {
+        #        C = 1.0;
+        #    } else {
+        #        C = 0.0;
+        #    }
+        # }
+
+        # if (params.getUseRepulsionForOppositeEdges()) {
+        #    Vector2D p = Vector2D.valueOf(edgeStarts[i], edgeEnds[i]);
+        #    Vector2D q = Vector2D.valueOf(edgeStarts[j], edgeEnds[j]);
+        #    double cos = p.dot(q) / (p.length() * q.length());
+        #    if (cos < 0) {
+        #        C = -C;
+        #    }
+        # }
+     
+        return C
+        
+     def calcStandardEdgeCompatibility(self, i, j):
+        # i and j are polylines
+        if (isSelfLoop(i) or isSelfLoop(j)):
+            return 0.0
+        # i is a line with P0 and P1 as points
+        # j is a line with P2 and P3 as points
+        P0 = i.geometry().asPolyline()[0]
+        P1 = i.geometry().asPolyline()[1]
+        P2 = j.geometry().asPolyline()[0]
+        P3 = j.geometry().asPolyline()[1]        
+        
+        # p and q are the vectorial coordinates of i and j
+        p = QgsPoint((P1.x() - P0.x()), (P1.y() - P0.y()))
+        q = QgsPoint((P3.x() - P2.x()), (P3.y() - P2.y()))
+        # pm = Middle-point of i
+        # qm = Middle-point of j
+        pm = self.midpoint(P0, P1)
+        qm = self.midpoint(P2, P3)        
+        l_i = i.geometry.length()
+        l_j = j.geometry().length()
+        l_avg = (l_i + l_j) / 2
+
+        # Angle compatibility
+        Ca = 0.0
+        # if (params.getDirectionAffectsCompatibility()) {
+        #    Ca = (p.dot(q) / (p.length() * q.length()) + 1.0) / 2.0;
+        #} else {
+        # pq = Scalar product of p and q
+        pq = p.x() * q.x() + p.y() * q.y()
+        
+        # Angle calculation
+        Ca = abs(pq / (l_i * l_j ))
+        #}
+        if abs(Ca) < 1e-7:
+            Ca = 0.0
+        if (abs(abs(Ca) - 1.0) < 1e-7):
+            Ca = 1.0
+
+        # scale compatibility
+        Cs = 2 / ( (l_avg / min(l_i, l_j)) + (max(l_i, l_j) / l_avg) )
+
+        # position compatibility
+        Cp = l_avg / (l_avg + sqrt(pm.distance(qm)))
+
+        # visibility compatibility
+        Cv = 0.0
+        if (Ca * Cs * Cp > .9):
+            # this compatibility measure is only applied if the edges are
+            # (almost) parallel, equal in length and close together
+            Cv = min(self.visibilityCompatibility(P0,P1,P2,P3), self.visibilityCompatibility(P2,P3,P0,P1))
+        else:
+            Cv = 1.0
+
+        assert (Ca >= 0 and Ca <= 1)
+        assert (Cs >= 0 and Cs <= 1)
+        assert (Cp >= 0 and Cp <= 1)
+        assert (Cv >= 0 and Cv <= 1)
+
+#        if (params.getBinaryCompatibility()) {
+#            double threshold = params.getEdgeCompatibilityThreshold();
+#            Ca = Ca >= threshold ? 1.0 : 0.0;
+#            Cs = Cs >= threshold ? 1.0 : 0.0;
+#            Cp = Cp >= threshold ? 1.0 : 0.0;
+#            Cv = Cv >= threshold ? 1.0 : 0.0;
+#        }
+        standardEdgeCompatibility = Ca * Cs * Cp * Cv
+        return standardEdgeCompatibility
+
+         
