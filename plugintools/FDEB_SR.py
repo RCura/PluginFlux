@@ -184,7 +184,7 @@ class FDEB_SR:
     def isSelfLoop(self,edgeIdx):
         return edgeLengths[edgeIdx] == 0.0
     
-    def double calcSimpleEdgeCompatibility(self,i, j):
+    def calcSimpleEdgeCompatibility(self,i, j):
         if (isSelfLoop(i) or isSelfLoop(j)):
             return 0.0
 
@@ -197,8 +197,8 @@ class FDEB_SR:
         i1 = self.projectPointToLine(p0, p1, q1)
         # Calcul le point milieu Pm de la ligne P0-P1, et im point milieu de la ligne projete 
         # correspondant aux point I0 I1  
-        im = self.midpoint(i0, i1);
-        pm = self.midpoint(p0, p1);
+        im = self.midPoint(i0, i1);
+        pm = self.midPoint(p0, p1);
 
         return max(0,(1 - 2 * sqrt(pm.sqrDist(im)) / sqrt(i0.sqrDist(i1))))
  
