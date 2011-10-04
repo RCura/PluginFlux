@@ -189,64 +189,41 @@ class FDEB_SR:
             return 0.0
 
         l_avg = (edgeLengths[i] + edgeLengths[j]) / 2
-        # return l_avg / (l_avg + edgeStarts[i].distanceTo(edgeStarts[j]) + edgeEnds[i].distanceTo(edgeEnds[j]))
+        return (l_avg / (l_avg + sqrt(edgeStarts[i].sqrDist(edgeStarts[j])) + sqrt(edgeEnds[i].sqrDist(edgeEnds[j]))))
 
-    def double calcStandardEdgeCompatibility(self, i, j):
+    def visibilityCompatibility(self, p0, p1, q0, q1):
+        # Renvoie les points i0 et i1, projetee de q0 et q1 sur une ligne en continuité de P0 - P1
+        i0 = self.projectPointToLine(p0, p1, q0)
+        i1 = self.projectPointToLine(p0, p1, q1)
+        # Calcul le point milieu Pm de la ligne P0-P1, et im point milieu de la ligne projete 
+        # correspondant aux point I0 I1  
+        im = self.midpoint(i0, i1);
+        pm = self.midpoint(p0, p1);
+
+        return max(0,(1 - 2 * sqrt(pm.sqrDist(im)) / sqrt(i0.sqrDist(i1))))
+ 
+    def projectPointToLine(self, line1, line2, point) :
+  
+        x1 = line1.x()
+        y1 = line1.y()
+        x2 = line2.x()
+        y2 = line2.y()
+        x = point.x()
+        y = point.y()
+
+        L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+        r = ((y1-y)*(y1-y2) - (x1-x)*(x2-x1)) / (L * L)
+
+        return QgsPoint(x1 + r * (x2-x1), y1 + r * (y2-y1))
+    
+ 
+    def midPoint(P0,P1):
+
+        Xstart = P0.x() 
+        Ystart = P0.y()
+        Xend = P1.x()
+        Yend = P1.y()
+        XCP = (Xend + Xstart) / 2
+        YCP = (Yend + Ystart) / 2
         
-        if (isSelfLoop(i) or isSelfLoop(j)):
-            return 0.0
-
-        Vector2D p = Vector2D.valueOf(edgeStarts[i], edgeEnds[i]);
-        Vector2D q = Vector2D.valueOf(edgeStarts[j], edgeEnds[j]);
-        Point pm = GeomUtils.midpoint(edgeStarts[i], edgeEnds[i]);
-        Point qm = GeomUtils.midpoint(edgeStarts[j], edgeEnds[j]);
-        double l_avg = (edgeLengths[i] + edgeLengths[j]) / 2;
-
-        // angle compatibility
-        double Ca;
-        if (params.getDirectionAffectsCompatibility()) {
-            Ca = (p.dot(q) / (p.length() * q.length()) + 1.0) / 2.0;
-        } else {
-            Ca = Math.abs(p.dot(q) / (p.length() * q.length()));
-        }
-        if (Math.abs(Ca) < EPS) {
-            Ca = 0.0;
-        }     // this led to errors (when Ca == -1e-12)
-        if (Math.abs(Math.abs(Ca) - 1.0) < EPS) {
-            Ca = 1.0;
-        }
-
-        // scale compatibility
-        double Cs = 2 / ((l_avg / Math.min(edgeLengths[i], edgeLengths[j]))
-                + (Math.max(edgeLengths[i], edgeLengths[j]) / l_avg));
-
-        // position compatibility
-        double Cp = l_avg / (l_avg + pm.distanceTo(qm));
-
-        // visibility compatibility
-        double Cv;
-        if (Ca * Cs * Cp > .9) {
-            // this compatibility measure is only applied if the edges are
-            // (almost) parallel, equal in length and close together
-            Cv = Math.min(
-                    visibilityCompatibility(edgeStarts[i], edgeEnds[i], edgeStarts[j], edgeEnds[j]),
-                    visibilityCompatibility(edgeStarts[j], edgeEnds[j], edgeStarts[i], edgeEnds[i]));
-        } else {
-            Cv = 1.0;
-        }
-
-        assert (Ca >= 0 && Ca <= 1);
-        assert (Cs >= 0 && Cs <= 1);
-        assert (Cp >= 0 && Cp <= 1);
-        assert (Cv >= 0 && Cv <= 1);
-
-        if (params.getBinaryCompatibility()) {
-            double threshold = params.getEdgeCompatibilityThreshold();
-            Ca = Ca >= threshold ? 1.0 : 0.0;
-            Cs = Cs >= threshold ? 1.0 : 0.0;
-            Cp = Cp >= threshold ? 1.0 : 0.0;
-            Cv = Cv >= threshold ? 1.0 : 0.0;
-        }
-
-        return Ca * Cs * Cp * Cv;
-    }
+        return QgsPoint(XCP,YCP)
