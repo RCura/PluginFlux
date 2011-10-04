@@ -66,8 +66,9 @@ class FDEB_SR:
         init()
 
     def init(self):
-
-        # numEdges = flowMapGraph.getGraph().getEdgeCount()
+        mapC = self.iface.mapCanvas()
+        myLayer = mapC.currentLayer()
+        numEdges = myLayer.featureCount()
         edgeLengths = [None] * numEdges
         edgeStarts = [None] * numEdges
         edgeEnds = [None] * numEdges
@@ -83,7 +84,7 @@ class FDEB_SR:
             edge = #Recuperer l'ensemble des aretes du graphe
             edgeStarts[i] = Recuperer le Point de depart de cette ligne
             edgeEnds[i] = Recuperer le Point de fin de cette ligne
-            length = #taille de l'arrete = distance point de depart à point d'arrivée
+            length = #taille de l'arrete = distance point de depart �  point d'arrivée
             
             # if (Math.abs(length) < EPS) length = 0.0;
             edgeLengths[i] = length
@@ -103,7 +104,6 @@ class FDEB_SR:
         #  edgeValueMax = evMax;
         #  edgeValueMin = evMin;
         # }
-yes
         I = 100
         P = 1
         Pdouble = 1
