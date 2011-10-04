@@ -54,10 +54,16 @@ currentPath = os.path.dirname( __file__ )
 
 # Import des libs du plugin
 from ui_control import ui_Control
+from ui_control_fdeb import ui_Control_FDEB
+from ui_control_fdeb_RC import ui_Control_FDEB_RC
+from ui_control_fdeb_SR import ui_Control_FDEB_SR
 
 from plugintools.CommonUtils import FlowUtils
 from plugintools.nearestfeaturetool import SelectNearestFeature
 from plugintools.BezierUtils import BezierUtils
+from plugintools.FDEB import FDEB
+from plugintools.FDEB_RC import FDEB_RC
+from plugintools.FDEB_SR import FDEB_SR
 
 class PluginFlux:
     """
@@ -85,11 +91,39 @@ class PluginFlux:
         QObject.connect(self.canvas, SIGNAL("mapToolSet(QgsMapTool*)"), self.deactivateBezier) # Si un autre outil est selectionné
         QObject.connect(self.BezierTool, SIGNAL("triggered()"), self.runBezier) # Chargement de l'outil Bezier
         
+        # On ajoute la fenetre FDEB Global
+        self.fdeb = QAction(QIcon(":/icons/icon_FDEB.png"), "FDEB", self.iface.mainWindow())
+        self.fdeb.setWhatsThis("Outil de bundling des liens selon FDEB")
+        self.fdeb.setStatusTip("Lancer la configuration de FDEB")
+        
+        QObject.connect(self.fdeb, SIGNAL("activated()"), self.runFDEB)
+        
+        # On ajoute la fenetre FDEB RC
+        self.fdeb_RC = QAction(QIcon(":/icons/icon_FDEB_RC.png"), "FDEB", self.iface.mainWindow())
+        self.fdeb_RC.setWhatsThis("Outil de bundling des liens selon FDEB")
+        self.fdeb_RC.setStatusTip("Lancer la configuration de FDEB")
+        
+        QObject.connect(self.fdeb_RC, SIGNAL("activated()"), self.runFDEB_RC)
+        
+        # On ajoute la fenetre FDEB SR
+        self.fdeb_SR = QAction(QIcon(":/icons/icon_FDEB_SR.png"), "FDEB", self.iface.mainWindow())
+        self.fdeb_SR.setWhatsThis("Outil de bundling des liens selon FDEB")
+        self.fdeb_SR.setStatusTip("Lancer la configuration de FDEB")
+        
+        QObject.connect(self.fdeb_SR, SIGNAL("activated()"), self.runFDEB_SR)
+        
         # add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
         self.iface.addToolBarIcon(self.BezierTool)
+        self.iface.addToolBarIcon(self.fdeb)
+        self.iface.addToolBarIcon(self.fdeb_RC)
+        self.iface.addToolBarIcon(self.fdeb_SR)
+        
         self.iface.addPluginToMenu("&PluginFlux", self.action)
         self.iface.addPluginToMenu("&PluginFlux", self.BezierTool)
+        self.iface.addPluginToMenu("&PluginFlux", self.fdeb)
+        self.iface.addPluginToMenu("&PluginFlux", self.fdeb_RC)
+        self.iface.addPluginToMenu("&PluginFlux", self.fdeb_SR)
     
     def unload(self):
         # remove the plugin menu item and icon
@@ -98,6 +132,13 @@ class PluginFlux:
         # on enleve aussi l'outil Bezier
         self.iface.removePluginMenu("&PluginFlux", self.BezierTool)
         self.iface.removeToolBarIcon(self.BezierTool)
+        # Et FDEB
+        self.iface.removePluginMenu("PluginFlux", self.fdeb)
+        self.iface.removeToolBarIcon(self.fdeb)
+        self.iface.removePluginMenu("PluginFlux", self.fdeb_RC)
+        self.iface.removeToolBarIcon(self.fdeb_RC)
+        self.iface.removePluginMenu("PluginFlux", self.fdeb_SR)
+        self.iface.removeToolBarIcon(self.fdeb_SR)
     
     def run(self):
         # create and show a configuration dialog or something similar
@@ -151,8 +192,7 @@ class PluginFlux:
               
     def doBezierSVG(self):
         FlowUtils(self.iface).createBezierSVG()
-      
-          
+
           
     def runBezier(self):
         if self.canvas.layerCount() != 0:
@@ -182,3 +222,52 @@ class PluginFlux:
             displayedLayer = self.canvas.layers()[i]
             displayedLayer.removeSelection(False)
         self.canvas.refresh()
+        
+    def runFDEB(self):
+            # create and show a configuration dialog or something similar
+            flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
+            self.fdebGUI = ui_Control_FDEB(self.iface.mainWindow(), flags)
+            self.fdebGUI.setWindowTitle('FDEB - Version d\'Intégration')
+            QObject.connect(self.fdebGUI.btnClose, SIGNAL('clicked()'), self.closeFDEB)
+            QObject.connect(self.fdebGUI.pB_test, SIGNAL('clicked()'), self.launchFDEB)
+            self.fdebGUI.textEdit.setText("Test de texte.....")
+            self.fdebGUI.show()
+    
+    def closeFDEB(self):
+        self.fdebGUI.reject()
+        
+    def launchFDEB(self):
+        FDEB(self.iface).test()
+        
+    def runFDEB_RC(self):
+        # create and show a configuration dialog or something similar
+        flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
+        self.fdebGUI_RC = ui_Control_FDEB_RC(self.iface.mainWindow(), flags)
+        self.fdebGUI_RC.setWindowTitle('FDEB - Version de RC')
+        QObject.connect(self.fdebGUI_RC.btnClose, SIGNAL('clicked()'), self.closeFDEB_RC)
+        QObject.connect(self.fdebGUI_RC.pB_test, SIGNAL('clicked()'), self.launchFDEB_RC)
+        self.fdebGUI_RC.textEdit.setText("Test de texte..... Pour Robin")
+        self.fdebGUI_RC.show()
+    
+    def closeFDEB_RC(self):
+        self.fdebGUI_RC.reject()
+        
+    def launchFDEB_RC(self):
+        FDEB_RC(self.iface).test()
+        
+    def runFDEB_SR(self):
+        # create and show a configuration dialog or something similar
+        flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
+        self.fdebGUI_SR = ui_Control_FDEB_SR(self.iface.mainWindow(), flags)
+        self.fdebGUI_SR.setWindowTitle('FDEB - Version de SR')
+        QObject.connect(self.fdebGUI_SR.btnClose, SIGNAL('clicked()'), self.closeFDEB_SR)
+        QObject.connect(self.fdebGUI_SR.pB_test, SIGNAL('clicked()'), self.launchFDEB_SR)
+        self.fdebGUI_SR.textEdit.setText("Test de texte..... Pour Sébastien")
+        self.fdebGUI_SR.show()
+    
+    def closeFDEB_SR(self):
+        self.fdebGUI_SR.reject()
+        
+    def launchFDEB_SR(self):
+        FDEB_SR(self.iface).test()
+        

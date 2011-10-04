@@ -5,4 +5,13 @@
     <qresource prefix="/" >
         <file>icons/icon_Bezier.png</file>
     </qresource>
+    <qresource prefix="/" >
+        <file>icons/icon_FDEB.png</file>
+    </qresource>
+    <qresource prefix="/" >
+        <file>icons/icon_FDEB_RC.png</file>
+    </qresource>
+    <qresource prefix="/" >
+        <file>icons/icon_FDEB_SR.png</file>
+    </qresource>
 </RCC>

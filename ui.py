@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui.ui'
 #
-# Created: Wed Aug 17 16:44:55 2011
+# Created: Tue Oct  4 12:25:41 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -18,6 +18,8 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(594, 627)
+        Dialog.setSizeGripEnabled(False)
+        Dialog.setModal(True)
         self.textEdit = QtGui.QTextEdit(Dialog)
         self.textEdit.setGeometry(QtCore.QRect(10, 10, 571, 451))
         self.textEdit.setObjectName(_fromUtf8("textEdit"))
