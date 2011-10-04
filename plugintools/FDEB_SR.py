@@ -29,39 +29,40 @@ class FDEB_SR:
     def test(self):
         print "FDEB SR"
                  
-    # tab obj Point
-    edgePoints = [][] 
-    # tab Numerique Double
-    edgeLengths = []
-    # tab de list de CompatibleEdge
-    # private List<CompatibleEdge>[] compatibleEdgeLists
-  
-    # tab obj Point
-    edgeStarts = []
-    edgeEnds = []
-
-    # tab Numerique Double
-    edgeValues = []
-  
-    # Val numerique Double
-    edgeValueMax = 0.0
-    edgeValueMin = 0.0
-    # Val numerique Int
-    numEdges = 0
-    cycle = 0
-   
-    # number of subdivision points (will increase with every cycle)
-    P = 0
-    # used to keep the double value to keep the stable increase rate
-    Pdouble = 0.0
-    # Step Size
-    S = 0.0 
-    # number of iteration steps performed during a cycle
-    I = 0
+    
 
     def __init__(self):
         print "init"
-
+        # tab obj Point
+        edgePoints = [][] 
+        # tab Numerique Double
+        edgeLengths = []
+        # tab de list de CompatibleEdge
+        # private List<CompatibleEdge>[] compatibleEdgeLists
+        
+        # tab obj Point
+        edgeStarts = []
+        edgeEnds = []
+        
+        # tab Numerique Double
+        edgeValues = []
+        
+        # Val numerique Double
+        edgeValueMax = 0.0
+        edgeValueMin = 0.0
+        # Val numerique Int
+        numEdges = 0
+        cycle = 0
+        
+        # number of subdivision points (will increase with every cycle)
+        P = 0
+        # used to keep the double value to keep the stable increase rate
+        Pdouble = 0.0
+        # Step Size
+        S = 0.0 
+        # number of iteration steps performed during a cycle
+        I = 0
+        
     def bundle(self,numCycles):
         init()
 
