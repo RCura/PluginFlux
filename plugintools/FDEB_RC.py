@@ -25,45 +25,35 @@ class FDEB_SR:
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
+         # tab obj Point
+        edgePoints = [[]] 
+        edgeLengths = []
+        # tab de list de CompatibleEdge
+        # private List<CompatibleEdge>[] compatibleEdgeLists
+      
+        # tab obj Point
+        edgeStarts = []
+        edgeEnds = []
+        
+        edgeValues = []
+        edgeValueMax = 0.0
+        edgeValueMin = 0.0
+        numEdges = 0
+        cycle = 0
+        # number of subdivision points (will increase with every cycle)
+        P = 0
+        # used to keep the double value to keep the stable increase rate
+        Pdouble = 0.0
+        # Step Size
+        S = 0.0 
+        # number of iteration steps performed during a cycle
+        I = 0
         
     def test(self):
         print "FDEB SR"
-                 
-    # tab obj Point
-    edgePoints = [[]] 
-    # tab Numerique Double
-    edgeLengths = []
-    # tab de list de CompatibleEdge
-    # private List<CompatibleEdge>[] compatibleEdgeLists
-  
-    # tab obj Point
-    edgeStarts = []
-    edgeEnds = []
-
-    # tab Numerique Double
-    edgeValues = []
-  
-    # Val numerique Double
-    edgeValueMax = 0.0
-    edgeValueMin = 0.0
-    # Val numerique Int
-    numEdges = 0
-    cycle = 0
-   
-    # number of subdivision points (will increase with every cycle)
-    P = 0
-    # used to keep the double value to keep the stable increase rate
-    Pdouble = 0.0
-    # Step Size
-    S = 0.0 
-    # number of iteration steps performed during a cycle
-    I = 0
-
-    def __init__(self):
-        print "init"
 
     def bundle(self,numCycles):
-        init()
+        self.init()
 
     def init(self):
         myLayer = self.canvas.currentLayer()
@@ -122,8 +112,8 @@ class FDEB_SR:
         
         compatibleEdgeLists = [None] * numEdges
 
-        for i in range(numEdges):
-            compatibleEdgeLists[i] = #new ArrayList<CompatibleEdge>();
+#        for i in range(numEdges):
+#            compatibleEdgeLists[i] = #new ArrayList<CompatibleEdge>();
             
         numTotal = 0
         numCompatible = 0
@@ -132,7 +122,6 @@ class FDEB_SR:
   
         for i in range(numEdges):
             for j in range(i):
-                
                 C = calcEdgeCompatibility(i, j)
                 if (abs(C) >= edgeCompatibilityThreshold):
                     compatibleEdgeLists[i] = #(new CompatibleEdge(j, C));
@@ -169,7 +158,6 @@ class FDEB_SR:
         #        C = -C;
         #    }
         # }
-     
         return C
         
      def calcStandardEdgeCompatibility(self, i, j):
@@ -240,4 +228,47 @@ class FDEB_SR:
         standardEdgeCompatibility = Ca * Cs * Cp * Cv
         return standardEdgeCompatibility
 
-         
+    def isSelfLoop(self,edgeIdx):
+        return edgeLengths[edgeIdx] == 0.0
+        
+    def calcSimpleEdgeCompatibility(self,i, j):
+        if (self.isSelfLoop(i) or self.isSelfLoop(j)):
+            return 0.0
+        l_avg = (edgeLengths[i] + edgeLengths[j]) / 2
+        simpleEdgeCompatibility = (l_avg / (l_avg + sqrt(edgeStarts[i].sqrDist(edgeStarts[j])) + sqrt(edgeEnds[i].sqrDist(edgeEnds[j]))))
+        return simpleEdgeCompatibility
+        
+    def visibilityCompatibility(self, p0, p1, q0, q1):
+        # Renvoie les points i0 et i1, projetee de q0 et q1 sur une ligne en continuité de P0 - P1
+        i0 = self.projectPointToLine(p0, p1, q0)
+        i1 = self.projectPointToLine(p0, p1, q1)
+        # Calcul le point milieu Pm de la ligne P0-P1, et im point milieu de la ligne projete 
+        # correspondant aux point I0 I1  
+        im = self.midPoint(i0, i1);
+        pm = self.midPoint(p0, p1);
+        Cv = max(0,(1 - 2 * sqrt(pm.sqrDist(im)) / sqrt(i0.sqrDist(i1))))
+        return Cv
+        
+        
+    def projectPointToLine(self, line1, line2, point) :
+  
+        x1 = line1.x()
+        y1 = line1.y()
+        x2 = line2.x()
+        y2 = line2.y()
+        x = point.x()
+        y = point.y()
+
+        L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+        r = ((y1-y)*(y1-y2) - (x1-x)*(x2-x1)) / (L * L)
+        projectedPoint = QgsPoint(x1 + r * (x2-x1), y1 + r * (y2-y1))
+        return projectedPoint
+        
+    def midPoint(P0,P1):
+        Xstart = P0.x() 
+        Ystart = P0.y()
+        Xend = P1.x()
+        Yend = P1.y()
+        XCP = (Xend + Xstart) / 2
+        YCP = (Yend + Ystart) / 2
+        return QgsPoint(XCP,YCP)

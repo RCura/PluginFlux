@@ -189,7 +189,8 @@ class FDEB_SR:
             return 0.0
 
         l_avg = (edgeLengths[i] + edgeLengths[j]) / 2
-        return (l_avg / (l_avg + sqrt(edgeStarts[i].sqrDist(edgeStarts[j])) + sqrt(edgeEnds[i].sqrDist(edgeEnds[j]))))
+        simpleEdgeCompatibility = (l_avg / (l_avg + sqrt(edgeStarts[i].sqrDist(edgeStarts[j])) + sqrt(edgeEnds[i].sqrDist(edgeEnds[j]))))
+        return simpleEdgeCompatibility
 
     def visibilityCompatibility(self, p0, p1, q0, q1):
         # Renvoie les points i0 et i1, projetee de q0 et q1 sur une ligne en continuité de P0 - P1
