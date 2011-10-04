@@ -86,7 +86,9 @@ class FDEB_SR:
             edgeEnds[i] = Recuperer le Point de fin de cette ligne
             length = #taille de l'arrete = distance point de depart √  point d'arriv√©e
             
-            # if (Math.abs(length) < EPS) length = 0.0;
+            if (abs(length) < 1e-7):
+                length = 0.0
+
             edgeLengths[i] = length
             # if (params.getEdgeValueAffectsAttraction()) {
             #  double value = flowMapGraph.getEdgeWeight(edge, params.getEdgeWeightAttr());
@@ -137,3 +139,114 @@ class FDEB_SR:
                     
                 Csum =  CSum + abs(C)
                 numTotal = numTotal + 1
+
+
+    # private static class CompatibleEdge {
+    #
+    #      public CompatibleEdge(int edgeIdx, double c) {
+    #          this.edgeIdx = edgeIdx;
+    #          C = c;
+    #      }
+    #      final int edgeIdx;
+    #      final double C;
+    #  }
+
+    def calcEdgeCompatibility(self,i,j):
+        C = 0.0
+        
+        #if (params.getUseSimpleCompatibilityMeasure()) {
+        #    C = calcSimpleEdgeCompatibility(i, j);
+        #} else {
+        C = calcStandardEdgeCompatibility(i, j)
+        #}
+
+        assert (C >= 0 and C <= 1.0)
+        # if (params.getBinaryCompatibility()) {
+        #    if (C >= params.getEdgeCompatibilityThreshold()) {
+        #        C = 1.0;
+        #    } else {
+        #        C = 0.0;
+        #    }
+        # }
+
+        # if (params.getUseRepulsionForOppositeEdges()) {
+        #    Vector2D p = Vector2D.valueOf(edgeStarts[i], edgeEnds[i]);
+        #    Vector2D q = Vector2D.valueOf(edgeStarts[j], edgeEnds[j]);
+        #    double cos = p.dot(q) / (p.length() * q.length());
+        #    if (cos < 0) {
+        #        C = -C;
+        #    }
+        # }
+     
+        return C
+    
+    #Renvoi un boolean
+    def isSelfLoop(self,edgeIdx):
+        return edgeLengths[edgeIdx] == 0.0
+    
+    def double calcSimpleEdgeCompatibility(self,i, j):
+        if (isSelfLoop(i) or isSelfLoop(j)):
+            return 0.0
+
+        l_avg = (edgeLengths[i] + edgeLengths[j]) / 2
+        # return l_avg / (l_avg + edgeStarts[i].distanceTo(edgeStarts[j]) + edgeEnds[i].distanceTo(edgeEnds[j]))
+
+    def double calcStandardEdgeCompatibility(self, i, j):
+        
+        if (isSelfLoop(i) or isSelfLoop(j)):
+            return 0.0
+
+        Vector2D p = Vector2D.valueOf(edgeStarts[i], edgeEnds[i]);
+        Vector2D q = Vector2D.valueOf(edgeStarts[j], edgeEnds[j]);
+        Point pm = GeomUtils.midpoint(edgeStarts[i], edgeEnds[i]);
+        Point qm = GeomUtils.midpoint(edgeStarts[j], edgeEnds[j]);
+        double l_avg = (edgeLengths[i] + edgeLengths[j]) / 2;
+
+        // angle compatibility
+        double Ca;
+        if (params.getDirectionAffectsCompatibility()) {
+            Ca = (p.dot(q) / (p.length() * q.length()) + 1.0) / 2.0;
+        } else {
+            Ca = Math.abs(p.dot(q) / (p.length() * q.length()));
+        }
+        if (Math.abs(Ca) < EPS) {
+            Ca = 0.0;
+        }     // this led to errors (when Ca == -1e-12)
+        if (Math.abs(Math.abs(Ca) - 1.0) < EPS) {
+            Ca = 1.0;
+        }
+
+        // scale compatibility
+        double Cs = 2 / ((l_avg / Math.min(edgeLengths[i], edgeLengths[j]))
+                + (Math.max(edgeLengths[i], edgeLengths[j]) / l_avg));
+
+        // position compatibility
+        double Cp = l_avg / (l_avg + pm.distanceTo(qm));
+
+        // visibility compatibility
+        double Cv;
+        if (Ca * Cs * Cp > .9) {
+            // this compatibility measure is only applied if the edges are
+            // (almost) parallel, equal in length and close together
+            Cv = Math.min(
+                    visibilityCompatibility(edgeStarts[i], edgeEnds[i], edgeStarts[j], edgeEnds[j]),
+                    visibilityCompatibility(edgeStarts[j], edgeEnds[j], edgeStarts[i], edgeEnds[i]));
+        } else {
+            Cv = 1.0;
+        }
+
+        assert (Ca >= 0 && Ca <= 1);
+        assert (Cs >= 0 && Cs <= 1);
+        assert (Cp >= 0 && Cp <= 1);
+        assert (Cv >= 0 && Cv <= 1);
+
+        if (params.getBinaryCompatibility()) {
+            double threshold = params.getEdgeCompatibilityThreshold();
+            Ca = Ca >= threshold ? 1.0 : 0.0;
+            Cs = Cs >= threshold ? 1.0 : 0.0;
+            Cp = Cp >= threshold ? 1.0 : 0.0;
+            Cv = Cv >= threshold ? 1.0 : 0.0;
+        }
+
+        return Ca * Cs * Cp * Cv;
+    }
