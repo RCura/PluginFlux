@@ -188,8 +188,8 @@ class FDEB_SR:
         q = QgsPoint((P3.x() - P2.x()), (P3.y() - P2.y()))
         # pm = Middle-point of i
         # qm = Middle-point of j
-        pm = self.midpoint(P0, P1)
-        qm = self.midpoint(P2, P3)        
+        pm = self.midPoint(P0, P1)
+        qm = self.midPoint(P2, P3)        
         l_i = i.geometry.length()
         l_j = j.geometry().length()
         l_avg = (l_i + l_j) / 2
