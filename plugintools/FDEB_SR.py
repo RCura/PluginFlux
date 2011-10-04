@@ -229,3 +229,149 @@ class FDEB_SR:
         YCP = (Yend + Ystart) / 2
         
         return QgsPoint(XCP,YCP)
+
+   
+    def nextCycle(self):
+        
+        Pdouble = self.Pdouble
+        P = self.P
+        S = self.S
+        I = self.I
+
+        subdivisionPointsCycleIncreaseRate = 1.3
+        stepDampingFactor = 0.5
+
+        # Set parameters for the next cycle
+        # Bizarre ...
+        if (cycle > 0):
+            Pdouble = Pdouble * params.subdivisionPointsCycleIncreaseRate
+            P = Int(round(Pdouble))
+            S = S * (1.0 - stepDampingFactor)
+            I = (I * 2) / 3
+    
+            
+        self.addSubdivisionPoints(P)
+            
+        # Perform simulation steps
+
+        # init tableau multi-dimensionnel
+        # Point[][] tmpEdgePoints = new Point[numEdges][P];
+        tmpEdgePoints = [None] * numEdges
+        for i in tmpEdgePoints:
+            tmpEdgePoints[i] = [None] * P
+        
+        step = 0
+        while (step < I):
+            
+            pe = 0
+            while (pe < numEdges): 
+               
+                #p et newP = Point[]
+                p = edgePoints[pe]
+                newP = tmpEdgePoints[pe]
+
+                # if (isSelfLoop(pe)) {
+                #    continue;     // ignore self-loops
+                #    }
+                
+                # ?
+
+                final int numOfSegments = P + 1;
+                double k_p = params.getK() / (edgeLengths[pe] * numOfSegments);
+                
+                # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
+                compatible = compatibleEdgeLists[pe]
+                
+                i = 0
+                while (i < P):
+                    # spring forces
+                    p_i = p[i]
+                    p_prev = (i == 0 ? edgeStarts[pe] : p[i - 1])
+                    p_next = (i == P - 1 ? edgeEnds[pe] : p[i + 1])
+                    Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
+                    Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
+                    
+                    if (abs(k_p) < 1.0):
+                        Fsi_x = Fsi_x * k_p
+                        Fsi_y = Fsi_y * k_p
+        
+                    # attracting electrostatic forces (for each other compatible edge)
+                    double Fei_x = 0;
+                    double Fei_y = 0;
+
+                    size = compatible.size()
+                    ci = 0
+
+                    while(ci < size):
+                        CompatibleEdge ce = compatible.get(ci);
+                        final int qe = ce.edgeIdx;
+                        final double C = ce.C;
+                        Point q_i = edgePoints[qe][i];
+                         
+                        double v_x = q_i.x() - p_i.x();
+                        double v_y = q_i.y() - p_i.y();
+                         
+                        if (Math.abs(v_x) > EPS  ||  Math.abs(v_y) > EPS):  # zero vector has no direction
+                             
+                            double d = Math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
+                            double m
+
+                            if (params.getUseInverseQuadraticModel()):
+                                m = (C / d) / (d * d)
+                            else:
+                                m = (C / d) / d
+                                 
+                            if (C < 0):  # means that repulsion is enabled
+                                m = m * params.getRepulsionAmount()
+                                 
+                            if (params.getEdgeValueAffectsAttraction()):
+                                double coeff = 1.0 + Math.max(-1.0, (edgeValues[qe] - edgeValues[pe])/(edgeValueMax + edgeValueMin))
+                                m = m * coeff
+                                 
+                            if (Math.abs(m * S) > 1.0):
+                              #// this condition is to reduce the "hairy" effect:
+                              #// a point shouldn't be moved farther than to the
+                              #// point which attracts it
+                                m = Math.signum(m) / S
+                              # TODO: this force difference shouldn't be neglected
+                              # instead it should make it more difficult to move the
+                              # point from it's current position: this should reduce
+                              # the effect even more
+                                 
+                            v_x = v_w * m
+                            v_y = v_y * m
+                            Fei_x = Fei_x + v_x
+                            Fei_y = Fei_y + v_y
+                             
+                            ci = ci + 1
+                            # end while ci
+    
+                    Fpi_x = Fsi_x + Fei_x
+                    Fpi_y = Fsi_y + Fei_y
+
+                    # np est un Point
+                    np = newP[i]
+                    if (np == None):
+                        np = QgsPoint(p[i].x(), p[i].y())
+                         
+                    np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
+                    newP[i] = np
+                    i = i +1
+                    #end while i
+
+                pe = pe + 1 
+                # end while pe
+
+            copy(tmpEdgePoints, edgePoints);
+            progressTracker.subtaskCompleted();
+            step = step + 1
+            #end step + 1
+
+        if (!progressTracker.isCancelled()) :
+            # update params only in case of success (i.e. no exception)
+            this.P = P
+            this.Pdouble = Pdouble
+            this.S = S
+            this.I = I
+            cycle++
+
