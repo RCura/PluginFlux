@@ -389,24 +389,91 @@ class FDEB_SR:
             self.I = I
             cycle = cycle +1
 
-        # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
-        def signum(self, int):
-            if(int < 0): return -1;
-            elif(int > 0): return 1;
-            else: return int;
+    # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
+    def signum(self, int):
+        if(int < 0): return -1;
+        elif(int > 0): return 1;
+        else: return int;
 
-        def copy(self,src, dest):
+    def copy(self,src, dest):
 
-            if (len(src) != len(dest)) : raise Exception("Src and dest array sizes mismatch")
+        if (len(src) != len(dest)) : raise Exception("Src and dest array sizes mismatch")
             
-            i = 0
-            for i in range(len(src)):
-                j = 0
-                for j in range(len(src[i])):
-                    ps = src[i][j]
-                    if (ps == null):
-                        dest[i][j] = null
-                    else:
-                        dest[i][j] = QgsPoint(ps.x(), ps.y())
+        i = 0
+        for i in range(len(src)):
+            j = 0
+            for j in range(len(src[i])):
+                ps = src[i][j]
+                if (ps == null):
+                    dest[i][j] = null
+                else:
+                    dest[i][j] = QgsPoint(ps.x(), ps.y())
     
+
+    def addSubdivisionPoints(P):
+
+        prevP = 0
     
+        if (edgePoints == null  or  edgePoints.length == 0):
+            prevP = 0
+        else:
+            prevP = len(edgePoints[0])
+
+        # bigger array for subdivision points of the next cycle
+        # Point[][] newEdgePoints = new Point[numEdges][P];
+        newEdgePoints = [None] * numEdges
+        for i in newEdgePoints:
+            newEdgePoints[i] = [None] * P
+
+        # Add subdivision points
+        # i < len(newEdgePoints)
+        for i in range len(newEdgePoints):
+            if (self.isSelfLoop(i)):
+                continue   # ignore self-loops
+                    
+            newPoints = newEdgePoints[i]
+            if (cycle == 0):
+                assert(P == 1)
+                newPoints[0] = self.midpoint(edgeStarts[i], edgeEnds[i])
+            else:
+                # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
+                points = edgePoints[i]
+                points.insert(0, edgeStarts[i])
+                points.append(edgeEnds[i])
+
+                polylineLen = 0
+                segmentLen = [None] * (prevP + 1)
+                        
+                # j < prevP +1
+                for j in range(prevP + 1):
+                    segLen = sqr(points[j].sqrDist(points[j + 1]))
+                    segmentLen[j] = segLen
+                    polylineLen = polylineLen + segLen
+                            
+                L = polylineLen / (P + 1)
+                curSegment = 0
+                prevSegmentsLen = 0
+                # Recupere points
+                p = points[0]
+                nextP = points[1]
+
+                # j < P
+                for j in range(P): 
+                    while (segmentLen[curSegment] < L * (j + 1) - prevSegmentsLen):
+                        prevSegmentsLen = prevSegmentsLen + segmentLen[curSegment]
+                        curSegment = curSegment + 1
+                        p = points[curSegment]
+                        nextP = points[curSegment + 1]
+                                
+                    d = L * (j + 1) - prevSegmentsLen
+                    newPoints[j] = self.between(p, nextP, d / segmentLen[curSegment])
+        
+        edgePoints = newEdgePoints
+
+    """
+    Returns a point on a segment between the two points
+    @param alpha Between 0 and 1
+    """
+    def between(self, a, b, alpha):
+        return QgsPoint(a.x() + (b.x() - a.x()) * alpha,a.y() + (b.y() - a.y()) * alpha)
+  
