@@ -63,6 +63,8 @@ class FDEB_RC:
         self.edgeEnds = [None] * self.numEdges
         evMin = float('-inf')
         evMax = float('+inf')
+        # FIXME : A mettre en place avec les params.
+        # /!\ Ce paramètre est très important.
         # if (params.getEdgeValueAffectsAttraction()) {
         #   edgeValues = new double[numEdges];
         # }
@@ -83,6 +85,8 @@ class FDEB_RC:
             if (abs(length) < (1e-7)):
                 length = 0.0
             self.edgeLengths[i] = length
+            # FIXME : A mettre en place avec les params.
+            # /!\ Ce paramètre est très important.
             # if (params.getEdgeValueAffectsAttraction()) {
             #  double value = flowMapGraph.getEdgeWeight(edge, params.getEdgeWeightAttr());
             #  edgeValues[i] = value;
@@ -94,6 +98,7 @@ class FDEB_RC:
             #  }
             # }
             i += 1
+        # FIXME : A mettre en place avec les params.    
         # if (params.getEdgeValueAffectsAttraction()) {
         #  edgeValueMax = evMax;
         #  edgeValueMin = evMin;
@@ -111,9 +116,6 @@ class FDEB_RC:
     def calcEdgeCompatibilityMeasures(self,numEdges):
         
         compatibleEdgeLists = [None] * numEdges
-
-#        for i in range(numEdges):
-#            compatibleEdgeLists[i] = #new ArrayList<CompatibleEdge>();
             
         numTotal = 0
         numCompatible = 0
@@ -124,9 +126,8 @@ class FDEB_RC:
             for j in range(i):
                 C = calcEdgeCompatibility(i, j)
                 if (abs(C) >= edgeCompatibilityThreshold):
-                    # FIXME : A rendre fonctionnel
-                    compatibleEdgeLists[i] = #(new CompatibleEdge(j, C))
-                    compatibleEdgeLists[j] = #(new CompatibleEdge(i, C))
+                    compatibleEdgeLists[i].append([j,C])
+                    compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
                     
                 Csum =  CSum + abs(C)
