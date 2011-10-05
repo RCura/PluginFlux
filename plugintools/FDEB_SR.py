@@ -237,7 +237,12 @@ class FDEB_SR:
         P = self.P
         S = self.S
         I = self.I
-
+        
+        # A passer en parametre par la suite
+        useInverseQuadraticModel = False
+        K = 1.0
+        repulsionAmount = 1.0
+        edgeValueAffectsAttraction = False
         subdivisionPointsCycleIncreaseRate = 1.3
         stepDampingFactor = 0.5
 
@@ -274,10 +279,10 @@ class FDEB_SR:
                 #    continue;     // ignore self-loops
                 #    }
                 
-                # ?
-
-                final int numOfSegments = P + 1;
-                double k_p = params.getK() / (edgeLengths[pe] * numOfSegments);
+                # final value
+                numOfSegments = P + 1
+                
+                k_p = K / (edgeLengths[pe] * numOfSegments);
                 
                 # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
                 compatible = compatibleEdgeLists[pe]
@@ -286,8 +291,17 @@ class FDEB_SR:
                 while (i < P):
                     # spring forces
                     p_i = p[i]
-                    p_prev = (i == 0 ? edgeStarts[pe] : p[i - 1])
-                    p_next = (i == P - 1 ? edgeEnds[pe] : p[i + 1])
+
+                    if (i == 0):
+                        p_prev = edgeStarts[pe]
+                    else:
+                        p_prev = p[i - 1]
+
+                    if (i = P - 1 ):
+                        p_next = edgeEnds[pe] 
+                    else:
+                        p_next = p[i + 1]
+
                     Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
                     Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
                     
@@ -296,43 +310,44 @@ class FDEB_SR:
                         Fsi_y = Fsi_y * k_p
         
                     # attracting electrostatic forces (for each other compatible edge)
-                    double Fei_x = 0;
-                    double Fei_y = 0;
+                    Fei_x = 0
+                    Fei_y = 0
 
-                    size = compatible.size()
+                    size = len(compatible)
                     ci = 0
 
                     while(ci < size):
-                        CompatibleEdge ce = compatible.get(ci);
-                        final int qe = ce.edgeIdx;
-                        final double C = ce.C;
-                        Point q_i = edgePoints[qe][i];
+                        ce = compatible[ci]
+                        
+                        qe = ce.edgeIdx #final value, on recupere un attribut Idx du point ...
+                        C = ce.C #final value, idem on recupere un attribut C du point
+                        q_i = edgePoints[qe][i] # q_i = point 
                          
-                        double v_x = q_i.x() - p_i.x();
-                        double v_y = q_i.y() - p_i.y();
+                        v_x = q_i.x() - p_i.x();
+                        v_y = q_i.y() - p_i.y();
                          
-                        if (Math.abs(v_x) > EPS  ||  Math.abs(v_y) > EPS):  # zero vector has no direction
+                        if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
                              
-                            double d = Math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
-                            double m
+                            d = sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
+                            m = 0.0
 
-                            if (params.getUseInverseQuadraticModel()):
+                            if (useInverseQuadraticModel):
                                 m = (C / d) / (d * d)
                             else:
                                 m = (C / d) / d
                                  
                             if (C < 0):  # means that repulsion is enabled
-                                m = m * params.getRepulsionAmount()
+                                m = m * repulsionAmount
                                  
-                            if (params.getEdgeValueAffectsAttraction()):
-                                double coeff = 1.0 + Math.max(-1.0, (edgeValues[qe] - edgeValues[pe])/(edgeValueMax + edgeValueMin))
+                            if (edgeValueAffectsAttraction):
+                                coeff = 1.0 + max(-1.0, (edgeValues[qe] - edgeValues[pe])/(edgeValueMax + edgeValueMin))
                                 m = m * coeff
                                  
-                            if (Math.abs(m * S) > 1.0):
+                            if (abs(m * S) > 1.0):
                               #// this condition is to reduce the "hairy" effect:
                               #// a point shouldn't be moved farther than to the
                               #// point which attracts it
-                                m = Math.signum(m) / S
+                                m = self.signum(m) / S
                               # TODO: this force difference shouldn't be neglected
                               # instead it should make it more difficult to move the
                               # point from it's current position: this should reduce
@@ -362,16 +377,20 @@ class FDEB_SR:
                 pe = pe + 1 
                 # end while pe
 
-            copy(tmpEdgePoints, edgePoints);
-            progressTracker.subtaskCompleted();
+            self.copy(tmpEdgePoints, edgePoints);
+            
             step = step + 1
             #end step + 1
 
-        if (!progressTracker.isCancelled()) :
             # update params only in case of success (i.e. no exception)
-            this.P = P
-            this.Pdouble = Pdouble
-            this.S = S
-            this.I = I
-            cycle++
+            self.P = P
+            self.Pdouble = Pdouble
+            self.S = S
+            self.I = I
+            cycle = cycle +1
 
+        # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
+        def signum(self, int):
+            if(int < 0): return -1;
+            elif(int > 0): return 1;
+            else: return int;
