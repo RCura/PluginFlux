@@ -77,7 +77,6 @@ class FDEB_RC:
         i = 0
         while provider.nextFeature(feat):
             # type Edge ou QgisLine
-            edge = feat
             self.edgeStarts[i] = feat.geometry().asPolyline()[0]
             self.edgeEnds[i] = feat.geometry().asPolyline()[1]
             length = feat.geometry().length()
@@ -119,7 +118,6 @@ class FDEB_RC:
             
         numTotal = 0
         numCompatible = 0
-        Csum = 0.0
         edgeCompatibilityThreshold = 0.60
   
         for i in range(numEdges):
@@ -129,14 +127,12 @@ class FDEB_RC:
                     compatibleEdgeLists[i].append([j,C])
                     compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
-                    
-                Csum =  CSum + abs(C)
-                numTotal = numTotal + 1
 
 
     def calcEdgeCompatibility(self,i,j):
         C = 0.0
         
+        # FIXME : A completer, la fonction est prête.
         #if (params.getUseSimpleCompatibilityMeasure()) {
         #    C = calcSimpleEdgeCompatibility(i, j);
         #} else {
@@ -144,6 +140,7 @@ class FDEB_RC:
         #}
 
         assert (C >= 0 and C <= 1.0)
+        # FIXME : Est-ce vraiment utile ?
         # if (params.getBinaryCompatibility()) {
         #    if (C >= params.getEdgeCompatibilityThreshold()) {
         #        C = 1.0;
@@ -151,7 +148,8 @@ class FDEB_RC:
         #        C = 0.0;
         #    }
         # }
-
+        
+        # FIXME : On dégage ?
         # if (params.getUseRepulsionForOppositeEdges()) {
         #    Vector2D p = Vector2D.valueOf(edgeStarts[i], edgeEnds[i]);
         #    Vector2D q = Vector2D.valueOf(edgeStarts[j], edgeEnds[j]);
@@ -162,7 +160,7 @@ class FDEB_RC:
         # }
         return C
         
-     def calcStandardEdgeCompatibility(self, i, j):
+    def calcStandardEdgeCompatibility(self, i, j):
         # i and j are polylines
         if (isSelfLoop(i) or isSelfLoop(j)):
             return 0.0
@@ -186,6 +184,8 @@ class FDEB_RC:
 
         # Angle compatibility
         Ca = 0.0
+        
+        # FIXME :A intégrer dans le GUI.
         # if (params.getDirectionAffectsCompatibility()) {
         #    Ca = (p.dot(q) / (p.length() * q.length()) + 1.0) / 2.0;
         #} else {
@@ -220,6 +220,7 @@ class FDEB_RC:
         assert (Cp >= 0 and Cp <= 1)
         assert (Cv >= 0 and Cv <= 1)
 
+        # FIXME : Binary compatibility encore, on dégage ?
 #        if (params.getBinaryCompatibility()) {
 #            double threshold = params.getEdgeCompatibilityThreshold();
 #            Ca = Ca >= threshold ? 1.0 : 0.0;
@@ -305,7 +306,6 @@ class FDEB_RC:
         # Perform simulation steps
 
         # init tableau multi-dimensionnel
-        # Point[][] tmpEdgePoints = new Point[numEdges][P];
         tmpEdgePoints = [None] * numEdges
         for i in tmpEdgePoints:
             tmpEdgePoints[i] = [None] * P
@@ -342,7 +342,7 @@ class FDEB_RC:
                     else:
                         p_prev = p[i - 1]
 
-                    if (i = P - 1 ):
+                    if (i == (P - 1) ):
                         p_next = self.edgeEnds[pe] 
                     else:
                         p_next = p[i + 1]
@@ -471,7 +471,7 @@ class FDEB_RC:
 
         # Add subdivision points
         # i < len(newEdgePoints)
-        for i in range len(newEdgePoints):
+        for i in range(len(newEdgePoints)):
             if (self.isSelfLoop(i)):
                 continue   # ignore self-loops
                     
