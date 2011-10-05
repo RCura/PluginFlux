@@ -394,3 +394,19 @@ class FDEB_SR:
             if(int < 0): return -1;
             elif(int > 0): return 1;
             else: return int;
+
+        def copy(self,src, dest):
+
+            if (len(src) != len(dest)) : raise Exception("Src and dest array sizes mismatch")
+            
+            i = 0
+            for i in range(len(src)):
+                j = 0
+                for j in range(len(src[i])):
+                    ps = src[i][j]
+                    if (ps == null):
+                        dest[i][j] = null
+                    else:
+                        dest[i][j] = QgsPoint(ps.x(), ps.y())
+    
+    
