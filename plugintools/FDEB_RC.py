@@ -50,7 +50,7 @@ class FDEB_RC:
         self.I = 0
         
     def test(self):
-        print "FDEB SR"
+        print "FDEB RC"
 
     def bundle(self,numCycles):
         self.init()
