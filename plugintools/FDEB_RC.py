@@ -53,13 +53,12 @@ class FDEB_RC:
         
     def test(self):
         print "FDEB RC"
-        self.bundle(3)
+        self.bundle(6)
 
     def bundle(self,numCycles):
         self.init()
         for i in range(numCycles):
             self.nextCycle()
-            print self.cycle
             self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
             print "Bundling terminé"
             
@@ -133,7 +132,6 @@ class FDEB_RC:
                     self.compatibleEdgeLists[i].append([j,C])
                     self.compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
-                    print C
 
     def calcEdgeCompatibility(self,i,j):
         C = 0.0
@@ -379,7 +377,6 @@ class FDEB_RC:
                         if ce == None:
                             ci += 1
                             break
-                        print "ce : " + str(ce)
                         qe = ce[0] #final value, on recupere un attribut Idx du point ...
                         C = ce[1] #final value, idem on recupere un attribut C du point
                         q_i = self.edgePoints[qe][i] # q_i = point 
@@ -437,8 +434,7 @@ class FDEB_RC:
                 pe = pe + 1 
                 # end while pe
 
-            self.copy(tmpEdgePoints, self.edgePoints);
-            
+            self.copy(tmpEdgePoints, self.edgePoints)
             step = step + 1
             #end step + 1
 
@@ -500,7 +496,6 @@ class FDEB_RC:
                 points = self.edgePoints[i]
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
-                print points
 
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
@@ -544,9 +539,6 @@ class FDEB_RC:
 # => Nous, on doit simplement injecter dans nos features leurs nouvelles géométrie
 
     def updateLines(self):
-        # On va passer par des rubbeband
-        # 1 - On crée un rubberband à partir du tableau edgePoints
-        # 2 - On copie la geom du rubberband dans la feature.
         provider = self.layer.dataProvider()
         allAttrs = provider.attributeIndexes()
         provider.select(allAttrs)
@@ -562,14 +554,17 @@ class FDEB_RC:
             # 2 - On copie la geometrie du rubberband dans les feat
             # On converti le rb en coords
             coords = []
-            for j in range(rb.numberOfVertices()):
-                coords.append(rb.getPoint(0,j))
+            for k in range(rb.numberOfVertices()):
+                coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
+            
             feat.setGeometry(QgsGeometry().fromPolyline(coords))
+            
             # On supprime le rb
             rb.reset()
             # On commit le changement
             self.layer.commitChanges()
+            print str(feat.id())+ " " + str(feat.geometry().asPolyline())
             self.layer.updateExtents()
             
             # C'est fini, on peut donc incrémenter notre compteur.
