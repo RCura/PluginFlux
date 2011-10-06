@@ -116,8 +116,6 @@ class FDEB:
     def calcEdgeCompatibilityMeasures(self,numEdges):
         
         compatibleEdgeLists = [None] * numEdges
-            
-        numTotal = 0
         numCompatible = 0
         edgeCompatibilityThreshold = 0.60
   
