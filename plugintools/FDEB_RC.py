@@ -60,7 +60,8 @@ class FDEB_RC:
         for i in range(numCycles):
             self.nextCycle()
             self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
-            print "Bundling terminé"
+            print self.edgePoints
+            print "Cycle " + str(i) + " terminé"
             
 
     def init(self):
@@ -369,7 +370,7 @@ class FDEB_RC:
                     Fei_x = 0
                     Fei_y = 0
 
-                    size = len(compatible) - 1
+                    size = len(compatible)
                     ci = 0
 
                     while(ci < size):
@@ -496,6 +497,8 @@ class FDEB_RC:
                 points = self.edgePoints[i]
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
+                print points
+                print self.edgePoints[i]
 
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
@@ -545,33 +548,35 @@ class FDEB_RC:
         feat = QgsFeature()
         i = 0
         while provider.nextFeature(feat):
+            self.layer.startEditing()
             # 1 - On crée un rubberband à partir du tableau edgePoints
             # Création d'un rb vide
             rb = QgsRubberBand(self.canvas,  True) 
             # On remplit notre rubberband avec les points du tableau edgePoints
             for j in range(len(self.edgePoints[i])):
-                rb.addPoint(QgsPoint(self.edgePoints[i][j]))
+                rb.addPoint(self.edgePoints[i][j])
             # 2 - On copie la geometrie du rubberband dans les feat
             # On converti le rb en coords
             coords = []
             for k in range(rb.numberOfVertices()):
                 coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
-            
-            feat.setGeometry(QgsGeometry().fromPolyline(coords))
-            
+    
+            feat.setGeometry(QgsGeometry.fromPolyline(coords))
+            # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
             # On supprime le rb
             rb.reset()
             # On commit le changement
             self.layer.commitChanges()
-            print str(feat.id())+ " " + str(feat.geometry().asPolyline())
+            #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
+            #print feat.geometry().length()
             self.layer.updateExtents()
             
             # C'est fini, on peut donc incrémenter notre compteur.
             i += 1
         # On actualise le canvas.
         self.canvas.refresh()
-            
+        
             
             
         
