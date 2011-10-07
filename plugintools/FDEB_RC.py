@@ -53,7 +53,7 @@ class FDEB_RC:
         
     def test(self):
         print "FDEB RC"
-        self.bundle(6)
+        self.bundle(12)
 
     def bundle(self,numCycles):
         self.init()
@@ -562,7 +562,7 @@ class FDEB_RC:
                 coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
     
-            feat.setGeometry(QgsGeometry.fromPolyline(coords))
+            self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
             # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
             # On supprime le rb
             rb.reset()
@@ -570,7 +570,6 @@ class FDEB_RC:
             self.layer.commitChanges()
             #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
             #print feat.geometry().length()
-            self.layer.updateExtents()
             
             # C'est fini, on peut donc incrémenter notre compteur.
             i += 1

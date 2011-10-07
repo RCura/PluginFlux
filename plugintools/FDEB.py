@@ -11,6 +11,7 @@ from PyQt4.QtGui import *
 # Import des libs Qgis
 from qgis.core import *
 from qgis.gui import *
+import math
 import pdb
 
 
@@ -25,12 +26,13 @@ class FDEB:
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
-         # tab obj Point
+        self.layer = self.canvas.currentLayer()
+        # contient tous les points : Dim1 : Lignes / Dim2 : Points de la ligne
         self.edgePoints = [[]] 
         self.edgeLengths = []
         # tab de list de CompatibleEdge
         # private List<CompatibleEdge>[] compatibleEdgeLists
-      
+        self.compatibleEdgeLists = [[]]
         # tab obj Point
         self.edgeStarts = []
         self.edgeEnds = []
@@ -50,20 +52,25 @@ class FDEB:
         self.I = 0
         
     def test(self):
-        print "FDEB Global"
-        print self.cycle
+        print "FDEB RC"
+        self.bundle(12)
 
     def bundle(self,numCycles):
         self.init()
+        for i in range(numCycles):
+            self.nextCycle()
+            self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
+            print self.edgePoints
+            print "Cycle " + str(i) + " terminé"
+            
 
     def init(self):
-        myLayer = self.canvas.currentLayer()
-        self.numEdges = myLayer.featureCount()
+        self.numEdges = self.layer.featureCount()
         self.edgeLengths = [None] * self.numEdges
         self.edgeStarts = [None] * self.numEdges
         self.edgeEnds = [None] * self.numEdges
-        evMin = float('-inf')
-        evMax = float('+inf')
+        evMin = float('-inf') # A conserver pour EdgeValueAffectsAttraction
+        evMax = float('+inf') # Idem evMin
         # FIXME : A mettre en place avec les params.
         # /!\ Ce paramètre est très important.
         # if (params.getEdgeValueAffectsAttraction()) {
@@ -71,7 +78,7 @@ class FDEB:
         # }
 
         
-        provider = myLayer.dataProvider()
+        provider = self.layer.dataProvider()
         allAttrs = provider.attributeIndexes()
         provider.select(allAttrs)
         feat = QgsFeature()
@@ -115,18 +122,17 @@ class FDEB:
 
     def calcEdgeCompatibilityMeasures(self,numEdges):
         
-        compatibleEdgeLists = [None] * numEdges
+        self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
         edgeCompatibilityThreshold = 0.60
   
         for i in range(numEdges):
             for j in range(i):
-                C = calcEdgeCompatibility(i, j)
+                C = self.calcEdgeCompatibility(i, j)
                 if (abs(C) >= edgeCompatibilityThreshold):
-                    compatibleEdgeLists[i].append([j,C])
-                    compatibleEdgeLists[j].append([i,C])
+                    self.compatibleEdgeLists[i].append([j,C])
+                    self.compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
-
 
     def calcEdgeCompatibility(self,i,j):
         C = 0.0
@@ -135,7 +141,7 @@ class FDEB:
         #if (params.getUseSimpleCompatibilityMeasure()) {
         #    C = calcSimpleEdgeCompatibility(i, j);
         #} else {
-        C = calcStandardEdgeCompatibility(i, j)
+        C = self.calcStandardEdgeCompatibility(i, j)
         #}
 
         assert (C >= 0 and C <= 1.0)
@@ -160,9 +166,18 @@ class FDEB:
         return C
         
     def calcStandardEdgeCompatibility(self, i, j):
-        # i and j are polylines
-        if (isSelfLoop(i) or isSelfLoop(j)):
+        # i and j are integers
+        # We transfer the Lines to i and j
+
+        if (self.isSelfLoop(i) or self.isSelfLoop(j)):
             return 0.0
+        id_i = i
+        id_j = j
+        i = QgsFeature()
+        j = QgsFeature()
+        provider = self.layer.dataProvider()
+        provider.featureAtId(id_i, i)
+        provider.featureAtId(id_j, j)    
         # i is a line with P0 and P1 as points
         # j is a line with P2 and P3 as points
         P0 = i.geometry().asPolyline()[0]
@@ -177,7 +192,7 @@ class FDEB:
         # qm = Middle-point of j
         pm = self.midPoint(P0, P1)
         qm = self.midPoint(P2, P3)        
-        l_i = i.geometry.length()
+        l_i = i.geometry().length()
         l_j = j.geometry().length()
         l_avg = (l_i + l_j) / 2
 
@@ -203,7 +218,7 @@ class FDEB:
         Cs = 2 / ( (l_avg / min(l_i, l_j)) + (max(l_i, l_j) / l_avg) )
 
         # position compatibility
-        Cp = l_avg / (l_avg + sqrt(pm.distance(qm)))
+        Cp = l_avg / (l_avg + math.sqrt(pm.sqrDist(qm)))
 
         # visibility compatibility
         Cv = 0.0
@@ -237,7 +252,7 @@ class FDEB:
         if (self.isSelfLoop(i) or self.isSelfLoop(j)):
             return 0.0
         l_avg = (self.edgeLengths[i] + self.edgeLengths[j]) / 2
-        simpleEdgeCompatibility = (l_avg / (l_avg + sqrt(self.edgeStarts[i].sqrDist(self.edgeStarts[j])) + sqrt(self.edgeEnds[i].sqrDist(self.edgeEnds[j]))))
+        simpleEdgeCompatibility = (l_avg / (l_avg + math.sqrt(self.edgeStarts[i].sqrDist(self.edgeStarts[j])) + math.sqrt(self.edgeEnds[i].sqrDist(self.edgeEnds[j]))))
         return simpleEdgeCompatibility
         
     def visibilityCompatibility(self, p0, p1, q0, q1):
@@ -248,7 +263,7 @@ class FDEB:
         # correspondant aux point I0 I1  
         im = self.midPoint(i0, i1);
         pm = self.midPoint(p0, p1);
-        Cv = max(0,(1 - 2 * sqrt(pm.sqrDist(im)) / sqrt(i0.sqrDist(i1))))
+        Cv = max(0,(1 - 2 * math.sqrt(pm.sqrDist(im)) / math.sqrt(i0.sqrDist(i1))))
         return Cv
         
         
@@ -261,12 +276,12 @@ class FDEB:
         x = point.x()
         y = point.y()
 
-        L = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+        L = math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
         r = ((y1-y)*(y1-y2) - (x1-x)*(x2-x1)) / (L * L)
         projectedPoint = QgsPoint(x1 + r * (x2-x1), y1 + r * (y2-y1))
         return projectedPoint
         
-    def midPoint(P0,P1):
+    def midPoint(self,P0,P1):
         Xstart = P0.x() 
         Ystart = P0.y()
         Xend = P1.x()
@@ -288,14 +303,14 @@ class FDEB:
         K = 1.0
         repulsionAmount = 1.0
         edgeValueAffectsAttraction = False
-        subdivisionPointsCycleIncreaseRate = 1.3
+        subdivisionPointsCycleIncreaseRate = 1.3 # Non paramétrable dans jFlowMap
         stepDampingFactor = 0.5
 
         # Set parameters for the next cycle
         # FIXME : Bizarre ...
         if (self.cycle > 0):
-            Pdouble = Pdouble * params.subdivisionPointsCycleIncreaseRate
-            P = Int(round(Pdouble))
+            Pdouble = Pdouble * subdivisionPointsCycleIncreaseRate
+            P = int(round(Pdouble))
             S = S * (1.0 - stepDampingFactor)
             I = (I * 2) / 3
     
@@ -305,16 +320,14 @@ class FDEB:
         # Perform simulation steps
 
         # init tableau multi-dimensionnel
-        tmpEdgePoints = [None] * numEdges
-        for i in tmpEdgePoints:
+        tmpEdgePoints = [None] * self.numEdges
+        for i in range(len(tmpEdgePoints)):
             tmpEdgePoints[i] = [None] * P
         
         step = 0
         while (step < I):
-            
             pe = 0
-            while (pe < numEdges): 
-               
+            while (pe < self.numEdges): 
                 #p et newP = Point[]
                 p = self.edgePoints[pe]
                 newP = tmpEdgePoints[pe]
@@ -329,7 +342,7 @@ class FDEB:
                 k_p = K / (self.edgeLengths[pe] * numOfSegments);
                 
                 # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
-                compatible = compatibleEdgeLists[pe]
+                compatible = self.compatibleEdgeLists[pe]
                 
                 i = 0
                 while (i < P):
@@ -362,16 +375,18 @@ class FDEB:
 
                     while(ci < size):
                         ce = compatible[ci]
-                        
-                        qe = ce.edgeIdx #final value, on recupere un attribut Idx du point ...
-                        C = ce.C #final value, idem on recupere un attribut C du point
+                        if ce == None:
+                            ci += 1
+                            break
+                        qe = ce[0] #final value, on recupere un attribut Idx du point ...
+                        C = ce[1] #final value, idem on recupere un attribut C du point
                         q_i = self.edgePoints[qe][i] # q_i = point 
                          
                         v_x = q_i.x() - p_i.x();
                         v_y = q_i.y() - p_i.y();
                          
                         if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
-                            d = sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
+                            d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
                             m = 0.0
 
                             if (useInverseQuadraticModel):
@@ -420,8 +435,7 @@ class FDEB:
                 pe = pe + 1 
                 # end while pe
 
-            self.copy(tmpEdgePoints, self.edgePoints);
-            
+            self.copy(tmpEdgePoints, self.edgePoints)
             step = step + 1
             #end step + 1
 
@@ -430,7 +444,7 @@ class FDEB:
             self.Pdouble = Pdouble
             self.S = S
             self.I = I
-            self.cycle = self.cycle +1
+            self.cycle = self.cycle + 1
 
     # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
     def signum(self, int):
@@ -447,25 +461,25 @@ class FDEB:
             j = 0
             for j in range(len(src[i])):
                 ps = src[i][j]
-                if (ps == null):
-                    dest[i][j] = null
+                if (ps == None):
+                    dest[i][j] = None
                 else:
                     dest[i][j] = QgsPoint(ps.x(), ps.y())
     
 
-    def addSubdivisionPoints(P):
+    def addSubdivisionPoints(self,P):
 
         prevP = 0
     
-        if (self.edgePoints == null  or  self.edgePoints.length == 0):
+        if (self.edgePoints == None  or  len(self.edgePoints) == 0):
             prevP = 0
         else:
             prevP = len(self.edgePoints[0])
 
         # bigger array for subdivision points of the next cycle
         # Point[][] newEdgePoints = new Point[numEdges][P];
-        newEdgePoints = [None] * numEdges
-        for i in newEdgePoints:
+        newEdgePoints = [[None]] * self.numEdges
+        for i in range(len(newEdgePoints)):
             newEdgePoints[i] = [None] * P
 
         # Add subdivision points
@@ -477,19 +491,21 @@ class FDEB:
             newPoints = newEdgePoints[i]
             if (self.cycle == 0):
                 assert(P == 1)
-                newPoints[0] = self.midpoint(self.edgeStarts[i], self.edgeEnds[i])
+                newPoints[0] = self.midPoint(self.edgeStarts[i], self.edgeEnds[i])
             else:
                 # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
                 points = self.edgePoints[i]
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
+                print points
+                print self.edgePoints[i]
 
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
                         
                 # j < prevP +1
                 for j in range(prevP + 1):
-                    segLen = sqr(points[j].sqrDist(points[j + 1]))
+                    segLen = math.sqrt(points[j].sqrDist(points[j + 1]))
                     segmentLen[j] = segLen
                     polylineLen = polylineLen + segLen
                             
@@ -520,3 +536,48 @@ class FDEB:
     def between(self, a, b, alpha):
         return QgsPoint(a.x() + (b.x() - a.x()) * alpha,a.y() + (b.y() - a.y()) * alpha)
   
+  
+# TODO : On ne doit pas organiser les fonctions de "sortie" comme eux
+# => On n'a pas l'affichage sous forme de graphes à gérer
+# => Nous, on doit simplement injecter dans nos features leurs nouvelles géométrie
+
+    def updateLines(self):
+        provider = self.layer.dataProvider()
+        allAttrs = provider.attributeIndexes()
+        provider.select(allAttrs)
+        feat = QgsFeature()
+        i = 0
+        while provider.nextFeature(feat):
+            self.layer.startEditing()
+            # 1 - On crée un rubberband à partir du tableau edgePoints
+            # Création d'un rb vide
+            rb = QgsRubberBand(self.canvas,  True) 
+            # On remplit notre rubberband avec les points du tableau edgePoints
+            for j in range(len(self.edgePoints[i])):
+                rb.addPoint(self.edgePoints[i][j])
+            # 2 - On copie la geometrie du rubberband dans les feat
+            # On converti le rb en coords
+            coords = []
+            for k in range(rb.numberOfVertices()):
+                coords.append(rb.getPoint(0,k))
+            # On remplace la geom de la feat avec coords
+    
+            self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
+            # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
+            # On supprime le rb
+            rb.reset()
+            # On commit le changement
+            self.layer.commitChanges()
+            #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
+            #print feat.geometry().length()
+            
+            # C'est fini, on peut donc incrémenter notre compteur.
+            i += 1
+        # On actualise le canvas.
+        self.canvas.refresh()
+        
+            
+            
+        
+
+    
