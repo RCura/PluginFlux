@@ -53,19 +53,14 @@ class FDEB_RC:
         
     def test(self):
         print "FDEB RC"
-        self.bundle(5)
+        self.bundle(12)
 
     def bundle(self,numCycles):
-#        pyqtRemoveInputHook()
-#        pdb.set_trace()
-        while (self.layer == None):
-            QMessageBox.information(self.iface.mainWindow(),"About","Aucune couche n'est chargee")
-            break
         self.init()
         for i in range(numCycles):
             self.nextCycle()
+            print "self.cycle: " + str(self.cycle)
             self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
-            print self.edgePoints
             print "Cycle " + str(i) + " terminé"
         print "la ça va vraiment finir"
 
@@ -129,15 +124,12 @@ class FDEB_RC:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-        edgeCompatibilityThreshold = 0.30
+        edgeCompatibilityThreshold = 0.3
   
         for i in range(numEdges):
             for j in range(i):
                 C = self.calcEdgeCompatibility(i, j)
-                print C
                 if (abs(C) >= edgeCompatibilityThreshold):
-                    print i
-                    print j
                     self.compatibleEdgeLists[i].append([j,C])
                     self.compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
@@ -233,7 +225,6 @@ class FDEB_RC:
         if (Ca * Cs * Cp > .9):
             # this compatibility measure is only applied if the edges are
             # (almost) parallel, equal in length and close together
-    
             Cv = min(self.visibilityCompatibility(P0,P1,P2,P3), self.visibilityCompatibility(P2,P3,P0,P1))
         else:
             Cv = 1.0
@@ -251,10 +242,6 @@ class FDEB_RC:
 #            Cp = Cp >= threshold ? 1.0 : 0.0;
 #            Cv = Cv >= threshold ? 1.0 : 0.0;
 #        }
-        print "Ca : " + str(Ca)
-        print "Cs : " + str(Cs)
-        print "Cp : " + str(Cp)
-        print "Cv : " + str(Cv)
         standardEdgeCompatibility = Ca * Cs * Cp * Cv
         return standardEdgeCompatibility
 
@@ -326,8 +313,7 @@ class FDEB_RC:
             P = int(round(Pdouble))
             S = S * (1.0 - stepDampingFactor)
             I = (I * 2) / 3
-    
-
+            
         self.addSubdivisionPoints(P)
             
         # Perform simulation steps
@@ -385,19 +371,19 @@ class FDEB_RC:
 
                     size = len(compatible)
                     ci = 0
-#                    pyqtRemoveInputHook()
-#                    pdb.set_trace()
+
                     while(ci < size):
                         ce = compatible[ci]
-                        if ce == None:
+
+                        if (ce == None):
                             ci = ci + 1
                             continue
                         qe = ce[0] #final value, on recupere un attribut Idx du point ...
                         C = ce[1] #final value, idem on recupere un attribut C du point
                         q_i = self.edgePoints[qe][i] # q_i = point 
-                         
-                        v_x = q_i.x() - p_i.x();
-                        v_y = q_i.y() - p_i.y();
+
+                        v_x = q_i.x() - p_i.x()
+                        v_y = q_i.y() - p_i.y()
                          
                         if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
                             d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
@@ -448,7 +434,7 @@ class FDEB_RC:
 
                 pe = pe + 1 
                 # end while pe
-            
+
             self.copy(tmpEdgePoints, self.edgePoints)
             step = step + 1
             #end step + 1
@@ -506,13 +492,15 @@ class FDEB_RC:
             if (self.cycle == 0):
                 assert(P == 1)
                 newPoints[0] = self.midPoint(self.edgeStarts[i], self.edgeEnds[i])
+                print "pas d'insert/append"
             else:
                 # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
+                print "on insert/append"
+                #if self.cycle < 5: print "cycle: " + str(self.cycle) + " start: " + str(self.edgeStarts[i]) + " end: " + str(self.edgeEnds[i])
+                #if self.cycle > 1180 : print "cycle: " + str(self.cycle) + " start: " + str(self.edgeStarts[i]) + " end: " + str(self.edgeEnds[i])
                 points = self.edgePoints[i]
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
-                # print points
-                # print self.edgePoints[i]
 
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
@@ -560,27 +548,29 @@ class FDEB_RC:
         provider.select(allAttrs)
         feat = QgsFeature()
         i = 0
+        # print self.edgePoints
         while provider.nextFeature(feat):
+            #print self.edgePoints[i]
+            self.layer.startEditing()
             # 1 - On crée un rubberband à partir du tableau edgePoints
             # Création d'un rb vide
             rb = QgsRubberBand(self.canvas,  True) 
             # On remplit notre rubberband avec les points du tableau edgePoints
-            print "ABCD"
             for j in range(len(self.edgePoints[i])):
                 rb.addPoint(self.edgePoints[i][j])
-                print "i: " + str(i) + " j: " + str(j)
-                print self.edgePoints[i]
-                print self.edgePoints[i][j]
-            rb.reset()
             # 2 - On copie la geometrie du rubberband dans les feat
             # On converti le rb en coords
             coords = []
             for k in range(rb.numberOfVertices()):
                 coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
-            self.layer.startEditing()
             self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
+            # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
+            # On supprime le rb
+            rb.reset()
+            # On commit le changement
             self.layer.commitChanges()
+            
             # C'est fini, on peut donc incrémenter notre compteur.
             i += 1
         # On actualise le canvas.
