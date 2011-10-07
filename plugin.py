@@ -224,6 +224,9 @@ class PluginFlux:
         self.canvas.refresh()
         
     def runFDEB(self):
+        if self.canvas.currentLayer() == None :
+            QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Aucune couche n\'est chargée'))
+        else:
             # create and show a configuration dialog or something similar
             flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
             self.fdebGUI = ui_Control_FDEB(self.iface.mainWindow(), flags)
@@ -240,14 +243,17 @@ class PluginFlux:
         FDEB(self.iface).test()
         
     def runFDEB_RC(self):
-        # create and show a configuration dialog or something similar
-        flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
-        self.fdebGUI_RC = ui_Control_FDEB_RC(self.iface.mainWindow(), flags)
-        self.fdebGUI_RC.setWindowTitle('FDEB - Version de RC')
-        QObject.connect(self.fdebGUI_RC.btnClose, SIGNAL('clicked()'), self.closeFDEB_RC)
-        QObject.connect(self.fdebGUI_RC.pB_test, SIGNAL('clicked()'), self.launchFDEB_RC)
-        self.fdebGUI_RC.textEdit.setText("Test de texte..... Pour Robin")
-        self.fdebGUI_RC.show()
+        if self.canvas.currentLayer() == None :
+            QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Aucune couche n\'est chargée'))
+        else:
+            # create and show a configuration dialog or something similar
+            flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
+            self.fdebGUI_RC = ui_Control_FDEB_RC(self.iface.mainWindow(), flags)
+            self.fdebGUI_RC.setWindowTitle('FDEB - Version de RC')
+            QObject.connect(self.fdebGUI_RC.btnClose, SIGNAL('clicked()'), self.closeFDEB_RC)
+            QObject.connect(self.fdebGUI_RC.pB_test, SIGNAL('clicked()'), self.launchFDEB_RC)
+            self.fdebGUI_RC.textEdit.setText("Test de texte..... Pour Robin")
+            self.fdebGUI_RC.show()
     
     def closeFDEB_RC(self):
         self.fdebGUI_RC.reject()
@@ -256,14 +262,17 @@ class PluginFlux:
         FDEB_RC(self.iface).test()
         
     def runFDEB_SR(self):
-        # create and show a configuration dialog or something similar
-        flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
-        self.fdebGUI_SR = ui_Control_FDEB_SR(self.iface.mainWindow(), flags)
-        self.fdebGUI_SR.setWindowTitle('FDEB - Version de SR')
-        QObject.connect(self.fdebGUI_SR.btnClose, SIGNAL('clicked()'), self.closeFDEB_SR)
-        QObject.connect(self.fdebGUI_SR.pB_test, SIGNAL('clicked()'), self.launchFDEB_SR)
-        self.fdebGUI_SR.textEdit.setText("Test de texte..... Pour Sébastien")
-        self.fdebGUI_SR.show()
+        if self.canvas.currentLayer() == None :
+            QMessageBox.information(self.iface.mainWindow(),"Erreur",QString('Aucune couche n\'est chargée'))
+        else:        
+            # create and show a configuration dialog or something similar
+            flags = Qt.WindowTitleHint | Qt.WindowSystemMenuHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint   # QgisGui.ModalDialogFlags 
+            self.fdebGUI_SR = ui_Control_FDEB_SR(self.iface.mainWindow(), flags)
+            self.fdebGUI_SR.setWindowTitle('FDEB - Version de SR')
+            QObject.connect(self.fdebGUI_SR.btnClose, SIGNAL('clicked()'), self.closeFDEB_SR)
+            QObject.connect(self.fdebGUI_SR.pB_test, SIGNAL('clicked()'), self.launchFDEB_SR)
+            self.fdebGUI_SR.textEdit.setText("Test de texte..... Pour Sébastien")
+            self.fdebGUI_SR.show()
     
     def closeFDEB_SR(self):
         self.fdebGUI_SR.reject()
