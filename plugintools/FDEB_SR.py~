@@ -11,10 +11,8 @@ from PyQt4.QtGui import *
 # Import des libs Qgis
 from qgis.core import *
 from qgis.gui import *
-import math
 import pdb
-
-
+import math
 
 class FDEB_SR:
     """ 
@@ -22,7 +20,7 @@ class FDEB_SR:
     des flux pour appliquer
     l'algo FDEB.
     """
-    
+        
     def __init__(self, iface):
         self.iface = iface
         self.canvas = iface.mapCanvas()
@@ -52,16 +50,15 @@ class FDEB_SR:
         self.I = 0
         
     def test(self):
-        print "FDEB RC"
-        self.bundle(4)
+        print "FDEB SR"
+        self.bundle(6)
 
     def bundle(self,numCycles):
         self.init()
         for i in range(numCycles):
             self.nextCycle()
             self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
-            print self.edgePoints
-            print "Cycle " + str(i) + " terminé"
+            print "Bundling terminé"
             
 
     def init(self):
@@ -124,7 +121,7 @@ class FDEB_SR:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-        edgeCompatibilityThreshold = 0.3
+        edgeCompatibilityThreshold = 0.60
   
         for i in range(numEdges):
             for j in range(i):
@@ -298,9 +295,6 @@ class FDEB_SR:
         S = self.S
         I = self.I
         
-        #pyqtRemoveInputHook()
-        #pdb.set_trace()
-
         #FIXME : A passer en parametre par la suite
         useInverseQuadraticModel = False
         K = 1.0
@@ -316,6 +310,7 @@ class FDEB_SR:
             P = int(round(Pdouble))
             S = S * (1.0 - stepDampingFactor)
             I = (I * 2) / 3
+    
             
         self.addSubdivisionPoints(P)
             
@@ -329,10 +324,12 @@ class FDEB_SR:
         step = 0
         while (step < I):
             pe = 0
+            print "step > " + str(step)
             while (pe < self.numEdges): 
                 #p et newP = Point[]
                 p = self.edgePoints[pe]
                 newP = tmpEdgePoints[pe]
+                
 
                 # if (isSelfLoop(pe)) {
                 #    continue;     // ignore self-loops
@@ -372,29 +369,21 @@ class FDEB_SR:
                     Fei_x = 0
                     Fei_y = 0
 
-                    size = len(compatible)
-                    #print "taille compatible = " + str(size)
+                    size = len(compatible) - 1
                     ci = 0
 
                     while(ci < size):
-                        
                         ce = compatible[ci]
-
-                        if (ce == None):
-                            ci = ci + 1
-                            #print "ci > " + str(ci)
-                            continue
-
+                        if ce == None:
+                            ci += 1
+                            break
                         qe = ce[0] #final value, on recupere un attribut Idx du point ...
                         C = ce[1] #final value, idem on recupere un attribut C du point
                         q_i = self.edgePoints[qe][i] # q_i = point 
-
-                        v_x = q_i.x() - p_i.x()
-                        v_y = q_i.y() - p_i.y()
-
-                        #print "v_x = " + str(v_x)
-                        #print "v_x = " + str(v_x)
-
+                         
+                        v_x = q_i.x() - p_i.x();
+                        v_y = q_i.y() - p_i.y();
+                         
                         if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
                             d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
                             m = 0.0
@@ -403,8 +392,7 @@ class FDEB_SR:
                                 m = (C / d) / (d * d)
                             else:
                                 m = (C / d) / d
-                                #print "m equqal > " + str(m)
- 
+                                 
                             if (C < 0):  # means that repulsion is enabled
                                 m = m * repulsionAmount
                                  
@@ -422,13 +410,13 @@ class FDEB_SR:
                               # point from it's current position: this should reduce
                               # the effect even more
                                  
-                            v_x = v_x * m
+                            v_x = v_w * m
                             v_y = v_y * m
                             Fei_x = Fei_x + v_x
                             Fei_y = Fei_y + v_y
                              
-                        ci = ci + 1
-                        # end while ci
+                            ci = ci + 1
+                            # end while ci
     
                     Fpi_x = Fsi_x + Fei_x
                     Fpi_y = Fsi_y + Fei_y
@@ -536,9 +524,6 @@ class FDEB_SR:
                     d = L * (j + 1) - prevSegmentsLen
                     newPoints[j] = self.between(p, nextP, d / segmentLen[curSegment])
         
-        print "edgePoints = " + str(self.edgePoints)
-        print "newEdgePoints = " + str(newEdgePoints)
-
         self.edgePoints = newEdgePoints
 
     """
@@ -560,36 +545,32 @@ class FDEB_SR:
         feat = QgsFeature()
         i = 0
         while provider.nextFeature(feat):
-            self.layer.startEditing()
             # 1 - On crée un rubberband à partir du tableau edgePoints
             # Création d'un rb vide
             rb = QgsRubberBand(self.canvas,  True) 
             # On remplit notre rubberband avec les points du tableau edgePoints
             for j in range(len(self.edgePoints[i])):
-                rb.addPoint(self.edgePoints[i][j])
+                rb.addPoint(QgsPoint(self.edgePoints[i][j]))
             # 2 - On copie la geometrie du rubberband dans les feat
             # On converti le rb en coords
             coords = []
             for k in range(rb.numberOfVertices()):
                 coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
-    
-            self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
-            # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
+            # VOIR SI C'EST BIEN CA ICI QGSGEOMETRY.FROMPOLYLINE(GEOMETRY.ASPOLYLINE)) 
+            feat.setGeometry(QgsGeometry.fromPolyline(coords))
+            
             # On supprime le rb
             rb.reset()
             # On commit le changement
             self.layer.commitChanges()
-            #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
-            #print feat.geometry().length()
+            print str(feat.id())+ " " + str(feat.geometry().asPolyline())
+            self.layer.updateExtents()
             
             # C'est fini, on peut donc incrémenter notre compteur.
             i += 1
         # On actualise le canvas.
         self.canvas.refresh()
-        
             
             
-        
-
-    
+            
