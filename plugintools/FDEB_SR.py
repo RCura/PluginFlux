@@ -53,7 +53,7 @@ class FDEB_SR:
         
     def test(self):
         print "FDEB RC"
-        self.bundle(4)
+        self.bundle(10)
 
     def bundle(self,numCycles):
         self.init()
@@ -124,7 +124,7 @@ class FDEB_SR:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-        edgeCompatibilityThreshold = 0.3
+        edgeCompatibilityThreshold = 0.6
   
         for i in range(numEdges):
             for j in range(i):
@@ -505,9 +505,12 @@ class FDEB_SR:
                 newPoints[0] = self.midPoint(self.edgeStarts[i], self.edgeEnds[i])
             else:
                 # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
-                points = self.edgePoints[i]
+                points = []
+                points = self.edgePoints[i][:]
+                print "points before insert > " + str(points)
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
+                print "points after insert > " + str(points)
 
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
