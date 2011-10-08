@@ -105,6 +105,7 @@ class FDEB_SR:
             #  }
             # }
             i += 1
+        
         # FIXME : A mettre en place avec les params.    
         # if (params.getEdgeValueAffectsAttraction()) {
         #  edgeValueMax = evMax;
@@ -124,7 +125,7 @@ class FDEB_SR:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-        edgeCompatibilityThreshold = 0.6
+        edgeCompatibilityThreshold = 0.3
   
         for i in range(numEdges):
             for j in range(i):
@@ -302,10 +303,8 @@ class FDEB_SR:
         #pdb.set_trace()
 
         #FIXME : A passer en parametre par la suite
-        useInverseQuadraticModel = False
-        K = 1.0
-        repulsionAmount = 1.0
-        edgeValueAffectsAttraction = False
+        
+        
         subdivisionPointsCycleIncreaseRate = 1.3 # Non paramétrable dans jFlowMap
         stepDampingFactor = 0.5
 
@@ -328,121 +327,10 @@ class FDEB_SR:
         
         step = 0
         while (step < I):
+            
             pe = 0
             while (pe < self.numEdges): 
-                #p et newP = Point[]
-                p = self.edgePoints[pe]
-                newP = tmpEdgePoints[pe]
-
-                # if (isSelfLoop(pe)) {
-                #    continue;     // ignore self-loops
-                #    }
-                
-                # final value
-                numOfSegments = P + 1
-                
-                k_p = K / (self.edgeLengths[pe] * numOfSegments);
-                
-                # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
-                compatible = self.compatibleEdgeLists[pe]
-                
-                i = 0
-                while (i < P):
-                    # spring forces
-                    p_i = p[i]
-
-                    if (i == 0):
-                        p_prev = self.edgeStarts[pe]
-                    else:
-                        p_prev = p[i - 1]
-
-                    if (i == (P - 1) ):
-                        p_next = self.edgeEnds[pe] 
-                    else:
-                        p_next = p[i + 1]
-
-                    Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
-                    Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
-                    
-                    if (abs(k_p) < 1.0):
-                        Fsi_x = Fsi_x * k_p
-                        Fsi_y = Fsi_y * k_p
-        
-                    # attracting electrostatic forces (for each other compatible edge)
-                    Fei_x = 0
-                    Fei_y = 0
-
-                    size = len(compatible)
-                    #print "taille compatible = " + str(size)
-                    ci = 0
-
-                    while(ci < size):
-                        
-                        ce = compatible[ci]
-
-                        if (ce == None):
-                            ci = ci + 1
-                            #print "ci > " + str(ci)
-                            continue
-
-                        qe = ce[0] #final value, on recupere un attribut Idx du point ...
-                        C = ce[1] #final value, idem on recupere un attribut C du point
-                        q_i = self.edgePoints[qe][i] # q_i = point 
-
-                        v_x = q_i.x() - p_i.x()
-                        v_y = q_i.y() - p_i.y()
-
-                        #print "v_x = " + str(v_x)
-                        #print "v_x = " + str(v_x)
-
-                        if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
-                            d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
-                            m = 0.0
-
-                            if (useInverseQuadraticModel):
-                                m = (C / d) / (d * d)
-                            else:
-                                m = (C / d) / d
-                                #print "m equqal > " + str(m)
- 
-                            if (C < 0):  # means that repulsion is enabled
-                                m = m * repulsionAmount
-                                 
-                            if (edgeValueAffectsAttraction):
-                                coeff = 1.0 + max(-1.0, (self.edgeValues[qe] - self.edgeValues[pe])/(self.edgeValueMax + self.edgeValueMin))
-                                m = m * coeff
-                                 
-                            if (abs(m * S) > 1.0):
-                              #// this condition is to reduce the "hairy" effect:
-                              #// a point shouldn't be moved farther than to the
-                              #// point which attracts it
-                                m = self.signum(m) / S
-                              # TODO : this force difference shouldn't be neglected
-                              # instead it should make it more difficult to move the
-                              # point from it's current position: this should reduce
-                              # the effect even more
-                                 
-                            v_x = v_x * m
-                            v_y = v_y * m
-                            Fei_x = Fei_x + v_x
-                            Fei_y = Fei_y + v_y
-                             
-                        ci = ci + 1
-                        # end while ci
-    
-                    Fpi_x = Fsi_x + Fei_x
-                    Fpi_y = Fsi_y + Fei_y
-
-                    # np est un Point
-                    np = newP[i]
-                    if (np == None):
-                        np = QgsPoint(p[i].x(), p[i].y())
-                         
-                    np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
-                    newP[i] = np
-                    i = i +1
-                    #end while i
-
+                tmpEdgePoints[pe] = self.computeEdges(pe,tmpEdgePoints[pe],P,S)
                 pe = pe + 1 
                 # end while pe
 
@@ -450,12 +338,143 @@ class FDEB_SR:
             step = step + 1
             #end step + 1
 
-            # update params only in case of success (i.e. no exception)
-            self.P = P
-            self.Pdouble = Pdouble
-            self.S = S
-            self.I = I
-            self.cycle = self.cycle + 1
+        # update params only in case of success (i.e. no exception)
+        self.P = P
+        self.Pdouble = Pdouble
+        self.S = S
+        self.I = I
+        self.cycle = self.cycle + 1
+
+    def computeEdges(self,pe,subTmpEdgePoints,P,S):
+
+        K = 1.0
+
+        # if (isSelfLoop(pe)) {
+        #    continue;     // ignore self-loops
+        #    }
+                
+        # final value
+        numOfSegments = P + 1
+                
+        k_p = K / (self.edgeLengths[pe] * numOfSegments);
+                
+        i = 0
+        print "P = " + str(P)
+        while (i < P):
+            subTmpEdgePoints = self.springForces(i,S,pe,P,k_p,subTmpEdgePoints)
+            print "subTmp = " + str(subTmpEdgePoints)
+            print "i = " + str(i)
+            i = i + 1
+
+        return subTmpEdgePoints
+
+    def springForces(self,i,S,pe,P,k_p,newP):
+
+        useInverseQuadraticModel = False
+        repulsionAmount = 1.0
+        edgeValueAffectsAttraction = False
+
+        # newP = tmpEdgePoints[pe]
+        # p et newP = Point[]
+        p = self.edgePoints[pe]
+
+        # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
+        compatible = self.compatibleEdgeLists[pe]
+
+        # spring forces
+        p_i = p[i]
+
+        if (i == 0):
+            p_prev = self.edgeStarts[pe]
+        else:
+            p_prev = p[i - 1]
+
+        if (i == (P - 1) ):
+            p_next = self.edgeEnds[pe] 
+        else:
+            p_next = p[i + 1]
+
+        Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
+        Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
+        
+        print "abs (k_p) + " + str(k_p)
+        if (abs(k_p) < 1.0):
+            Fsi_x = Fsi_x * k_p
+            Fsi_y = Fsi_y * k_p
+        
+        # attracting electrostatic forces (for each other compatible edge)
+        Fei_x = 0
+        Fei_y = 0
+            
+        size = len(compatible)
+        # print "taille compatible = " + str(size)
+        ci = 0
+
+        while(ci < size):
+                        
+            ce = compatible[ci]
+
+            if (ce == None):
+                ci = ci + 1
+                # print "ci > " + str(ci)
+                continue
+
+            qe = ce[0] #final value, on recupere un attribut Idx du point ...
+            C = ce[1] #final value, idem on recupere un attribut C du point
+            q_i = self.edgePoints[qe][i] # q_i = point
+
+            v_x = q_i.x() - p_i.x()
+            v_y = q_i.y() - p_i.y()
+
+            # print "v_x = " + str(v_x)
+            # print "v_x = " + str(v_x)
+            
+            if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
+                d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
+                m = 0.0
+                    
+                if (useInverseQuadraticModel):
+                    m = (C / d) / (d * d)
+                else:
+                    m = (C / d) / d
+                    # print "m equqal > " + str(m)
+ 
+                if (C < 0):  # means that repulsion is enabled
+                    m = m * repulsionAmount
+                                 
+                if (edgeValueAffectsAttraction):
+                    coeff = 1.0 + max(-1.0, (self.edgeValues[qe] - self.edgeValues[pe])/(self.edgeValueMax + self.edgeValueMin))
+                    m = m * coeff
+                                 
+                if (abs(m * S) > 1.0):
+                    # // this condition is to reduce the "hairy" effect:
+                    # // a point shouldn't be moved farther than to the
+                    # // point which attracts it
+                    m = self.signum(m) / S
+                    # TODO : this force difference shouldn't be neglected
+                    # instead it should make it more difficult to move the
+                    # point from it's current position: this should reduce
+                    # the effect even more
+                            
+                v_x = v_x * m
+                v_y = v_y * m
+                Fei_x = Fei_x + v_x
+                Fei_y = Fei_y + v_y
+                             
+            ci = ci + 1
+            # end while ci
+    
+        Fpi_x = Fsi_x + Fei_x
+        Fpi_y = Fsi_y + Fei_y
+
+        # np est un Point
+        np = newP[i]
+        if (np == None):
+            np = QgsPoint(p[i].x(), p[i].y())
+                         
+        np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
+        newP[i] = np
+        return newP
 
     # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
     def signum(self, int):
@@ -476,7 +495,6 @@ class FDEB_SR:
                     dest[i][j] = None
                 else:
                     dest[i][j] = QgsPoint(ps.x(), ps.y())
-    
 
     def addSubdivisionPoints(self,P):
 
@@ -486,6 +504,8 @@ class FDEB_SR:
             prevP = 0
         else:
             prevP = len(self.edgePoints[0])
+        
+        print "prevP = " + str(prevP)
 
         # bigger array for subdivision points of the next cycle
         # Point[][] newEdgePoints = new Point[numEdges][P];
@@ -500,6 +520,7 @@ class FDEB_SR:
                 continue   # ignore self-loops
                     
             newPoints = newEdgePoints[i]
+
             if (self.cycle == 0):
                 assert(P == 1)
                 newPoints[0] = self.midPoint(self.edgeStarts[i], self.edgeEnds[i])
@@ -507,11 +528,9 @@ class FDEB_SR:
                 # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
                 points = []
                 points = self.edgePoints[i][:]
-                print "points before insert > " + str(points)
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
-                print "points after insert > " + str(points)
-
+                
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
                         
