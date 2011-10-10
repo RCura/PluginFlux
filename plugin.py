@@ -259,7 +259,7 @@ class PluginFlux:
         self.fdebGUI_RC.reject()
         
     def launchFDEB_RC(self):
-        FDEB_RC(self.iface).test()
+        FDEB_RC(self.iface, self.fdebGUI_RC).test()
         
     def runFDEB_SR(self):
         if self.canvas.currentLayer() == None :

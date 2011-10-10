@@ -14,6 +14,13 @@ from qgis.gui import *
 import math
 import pdb
 
+# FIXME : Les resultats peuvent être du grand n'importe-quoi
+# Deplacements beaucoup trop importants
+# Regarder l'histoire de seuil de déplacement (damping ?)
+# SInon, mettre une limite, genre empêcher que la ligne de fin
+# ne fasse plus de 2(?) fois la taille de la ligne d'arrivée
+
+# TODO : Regarder les commentaires à l'appel de springForces (ligne 386)
 
 
 class FDEB_RC:
@@ -23,7 +30,9 @@ class FDEB_RC:
     l'algo FDEB.
     """
     
-    def __init__(self, iface):
+    def __init__(self, iface, myUI):
+        self.fdebGUI_RC = myUI
+        self.progress = 0
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.layer = self.canvas.currentLayer()
@@ -53,16 +62,27 @@ class FDEB_RC:
         
     def test(self):
         print "FDEB RC"
-        self.bundle(12)
+        pyqtRemoveInputHook()
+        pdb.set_trace()
+        self.bundle(5)
 
     def bundle(self,numCycles):
         self.init()
+        self.fdebGUI_RC.progressBar.setValue(1)
         for i in range(numCycles):
+            if (i == 0): 
+                self.progress = 10
+            else:
+                self.progress = (100 / numCycles) * i
             self.nextCycle()
-            print "self.cycle: " + str(self.cycle)
-            self.updateLines() # Cette fonction remplace leur addGraphSubdivisionPoints()
             print "Cycle " + str(i) + " terminé"
-        print "la ça va vraiment finir"
+            self.fdebGUI_RC.progressBar.setValue(self.progress)
+        # On sort le updateLines de la boucle
+        self.updateLines()    
+        self.progress = 100
+        self.fdebGUI_RC.progressBar.setValue(self.progress)
+        print "tout est terminé"
+            
 
     def init(self):
         self.numEdges = self.layer.featureCount()
@@ -105,12 +125,13 @@ class FDEB_RC:
             #  }
             # }
             i += 1
+        
         # FIXME : A mettre en place avec les params.    
         # if (params.getEdgeValueAffectsAttraction()) {
         #  edgeValueMax = evMax;
         #  edgeValueMin = evMin;
         # }
-        self.I = 100
+        self.I = 20
         self.P = 1
         self.Pdouble = 1
         self.S = 1.0
@@ -298,11 +319,12 @@ class FDEB_RC:
         S = self.S
         I = self.I
         
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
+
         #FIXME : A passer en parametre par la suite
-        useInverseQuadraticModel = False
-        K = 1.0
-        repulsionAmount = 1.0
-        edgeValueAffectsAttraction = False
+        
+        
         subdivisionPointsCycleIncreaseRate = 1.3 # Non paramétrable dans jFlowMap
         stepDampingFactor = 0.5
 
@@ -325,113 +347,10 @@ class FDEB_RC:
         
         step = 0
         while (step < I):
+            
             pe = 0
             while (pe < self.numEdges): 
-                #p et newP = Point[]
-                p = self.edgePoints[pe]
-                newP = tmpEdgePoints[pe]
-
-                # if (isSelfLoop(pe)) {
-                #    continue;     // ignore self-loops
-                #    }
-                
-                # final value
-                numOfSegments = P + 1
-                
-                k_p = K / (self.edgeLengths[pe] * numOfSegments);
-                
-                # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
-                compatible = self.compatibleEdgeLists[pe]
-                
-                i = 0
-                while (i < P):
-                    # spring forces
-                    p_i = p[i]
-
-                    if (i == 0):
-                        p_prev = self.edgeStarts[pe]
-                    else:
-                        p_prev = p[i - 1]
-
-                    if (i == (P - 1) ):
-                        p_next = self.edgeEnds[pe] 
-                    else:
-                        p_next = p[i + 1]
-
-                    Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
-                    Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
-                    
-                    if (abs(k_p) < 1.0):
-                        Fsi_x = Fsi_x * k_p
-                        Fsi_y = Fsi_y * k_p
-        
-                    # attracting electrostatic forces (for each other compatible edge)
-                    Fei_x = 0
-                    Fei_y = 0
-
-                    size = len(compatible)
-                    ci = 0
-
-                    while(ci < size):
-                        ce = compatible[ci]
-
-                        if (ce == None):
-                            ci = ci + 1
-                            continue
-                        qe = ce[0] #final value, on recupere un attribut Idx du point ...
-                        C = ce[1] #final value, idem on recupere un attribut C du point
-                        q_i = self.edgePoints[qe][i] # q_i = point 
-
-                        v_x = q_i.x() - p_i.x()
-                        v_y = q_i.y() - p_i.y()
-                         
-                        if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
-                            d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
-                            m = 0.0
-
-                            if (useInverseQuadraticModel):
-                                m = (C / d) / (d * d)
-                            else:
-                                m = (C / d) / d
-                                 
-                            if (C < 0):  # means that repulsion is enabled
-                                m = m * repulsionAmount
-                                 
-                            if (edgeValueAffectsAttraction):
-                                coeff = 1.0 + max(-1.0, (self.edgeValues[qe] - self.edgeValues[pe])/(self.edgeValueMax + self.edgeValueMin))
-                                m = m * coeff
-                                 
-                            if (abs(m * S) > 1.0):
-                              #// this condition is to reduce the "hairy" effect:
-                              #// a point shouldn't be moved farther than to the
-                              #// point which attracts it
-                                m = self.signum(m) / S
-                              # TODO : this force difference shouldn't be neglected
-                              # instead it should make it more difficult to move the
-                              # point from it's current position: this should reduce
-                              # the effect even more
-                                 
-                            v_x = v_x * m
-                            v_y = v_y * m
-                            Fei_x = Fei_x + v_x
-                            Fei_y = Fei_y + v_y
-                             
-                        ci = ci + 1
-                        # end while ci
-    
-                    Fpi_x = Fsi_x + Fei_x
-                    Fpi_y = Fsi_y + Fei_y
-
-                    # np est un Point
-                    np = newP[i]
-                    if (np == None):
-                        np = QgsPoint(p[i].x(), p[i].y())
-                         
-                    np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
-                    newP[i] = np
-                    i = i +1
-                    #end while i
-
+                tmpEdgePoints[pe] = self.computeEdges(pe,tmpEdgePoints[pe],P,S)
                 pe = pe + 1 
                 # end while pe
 
@@ -439,18 +358,158 @@ class FDEB_RC:
             step = step + 1
             #end step + 1
 
-            # update params only in case of success (i.e. no exception)
-            self.P = P
-            self.Pdouble = Pdouble
-            self.S = S
-            self.I = I
-            self.cycle = self.cycle + 1
+        # update params only in case of success (i.e. no exception)
+        self.P = P
+        self.Pdouble = Pdouble
+        self.S = S
+        self.I = I
+        self.cycle = self.cycle + 1
+
+    def computeEdges(self,pe,subTmpEdgePoints,P,S):
+
+        K = 1.0
+
+        # if (isSelfLoop(pe)) {
+        #    continue;     // ignore self-loops
+        #    }
+                
+        # final value
+        numOfSegments = P + 1
+        if ((self.edgeLengths[pe] == 0) or (numOfSegments == 0)):
+            k_p = 2
+        else:
+            k_p = K / (self.edgeLengths[pe] * numOfSegments)
+                
+        i = 0
+        #print "P = " + str(P)
+        while (i < P):
+            # FIXME : A REVOIR !!! 
+            # springForces prend un temps énorme
+            # Il doit y avoir un probleme qqpart
+            # C'est du calcul simple normalement
+            # Essayer de réduire les accès aux points en mettant tout ça en tableau.
+            # Tester ce qui prend vraiment la majorité du temps à l'interieur.
+            subTmpEdgePoints = self.springForces(i,S,pe,P,k_p,subTmpEdgePoints)
+            i = i + 1
+            print "pe : %s / P: %s / i: %s / k_p: %s" %(pe, P, i, k_p)
+
+        return subTmpEdgePoints
+
+    def springForces(self,i,S,pe,P,k_p,newP):
+
+        useInverseQuadraticModel = False
+        repulsionAmount = 1.0
+        edgeValueAffectsAttraction = False
+
+        # newP = tmpEdgePoints[pe]
+        # p et newP = Point[]
+        p = self.edgePoints[pe]
+
+        # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
+        compatible = self.compatibleEdgeLists[pe]
+
+        # spring forces
+        p_i = p[i]
+        
+        if (i == 0):
+            p_prev = self.edgeStarts[pe]
+        else:
+            p_prev = p[i - 1]
+
+        if (i == (P - 1) ):
+            p_next = self.edgeEnds[pe] 
+        else:
+            p_next = p[i + 1]
+        if ( (p_prev == None ) or (p_i == None) or (p_next == None) or (p_i == None) ):
+            pyqtRemoveInputHook()
+            pdb.set_trace()
+        Fsi_x = (p_prev.x() - p_i.x()) + (p_next.x() - p_i.x())
+        Fsi_y = (p_prev.y() - p_i.y()) + (p_next.y() - p_i.y())
+        
+        #print "abs (k_p) + " + str(k_p)
+        if (abs(k_p) < 1.0):
+            Fsi_x = Fsi_x * k_p
+            Fsi_y = Fsi_y * k_p
+        
+        # attracting electrostatic forces (for each other compatible edge)
+        Fei_x = 0
+        Fei_y = 0
+            
+        size = len(compatible)
+        # print "taille compatible = " + str(size)
+        ci = 0
+
+        while(ci < size):
+                        
+            ce = compatible[ci]
+
+            if (ce == None):
+                ci = ci + 1
+                # print "ci > " + str(ci)
+                continue
+
+            qe = ce[0] #final value, on recupere un attribut Idx du point ...
+            C = ce[1] #final value, idem on recupere un attribut C du point
+            q_i = self.edgePoints[qe][i] # q_i = point
+
+            v_x = q_i.x() - p_i.x()
+            v_y = q_i.y() - p_i.y()
+
+            # print "v_x = " + str(v_x)
+            # print "v_x = " + str(v_x)
+            
+            if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
+                d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
+                m = 0.0
+                    
+                if (useInverseQuadraticModel):
+                    m = (C / d) / (d * d)
+                else:
+                    m = (C / d) / d
+                    # print "m equqal > " + str(m)
+ 
+                if (C < 0):  # means that repulsion is enabled
+                    m = m * repulsionAmount
+                                 
+                if (edgeValueAffectsAttraction):
+                    coeff = 1.0 + max(-1.0, (self.edgeValues[qe] - self.edgeValues[pe])/(self.edgeValueMax + self.edgeValueMin))
+                    m = m * coeff
+                                 
+                if (abs(m * S) > 1.0):
+                    # // this condition is to reduce the "hairy" effect:
+                    # // a point shouldn't be moved farther than to the
+                    # // point which attracts it
+                    m = self.signum(m) / S
+                    # TODO : this force difference shouldn't be neglected
+                    # instead it should make it more difficult to move the
+                    # point from it's current position: this should reduce
+                    # the effect even more
+                            
+                v_x = v_x * m
+                v_y = v_y * m
+                Fei_x = Fei_x + v_x
+                Fei_y = Fei_y + v_y
+                             
+            ci = ci + 1
+            # end while ci
+    
+        Fpi_x = Fsi_x + Fei_x
+        Fpi_y = Fsi_y + Fei_y
+
+        # np est un Point
+        np = newP[i]
+        if (np == None):
+            np = QgsPoint(p[i].x(), p[i].y())
+                         
+        np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
+        newP[i] = np
+        return newP
 
     # http://download.oracle.com/javase/1,5,0/docs/api/java/lang/Math.html#signum(float)
     def signum(self, int):
-        if(int < 0): return -1;
-        elif(int > 0): return 1;
-        else: return int;
+        if(int < 0): return -1
+        elif(int > 0): return 1
+        else: return int
 
     def copy(self,src, dest):
 
@@ -465,7 +524,6 @@ class FDEB_RC:
                     dest[i][j] = None
                 else:
                     dest[i][j] = QgsPoint(ps.x(), ps.y())
-    
 
     def addSubdivisionPoints(self,P):
 
@@ -475,6 +533,8 @@ class FDEB_RC:
             prevP = 0
         else:
             prevP = len(self.edgePoints[0])
+        
+        # print "prevP = " + str(prevP)
 
         # bigger array for subdivision points of the next cycle
         # Point[][] newEdgePoints = new Point[numEdges][P];
@@ -489,19 +549,17 @@ class FDEB_RC:
                 continue   # ignore self-loops
                     
             newPoints = newEdgePoints[i]
+
             if (self.cycle == 0):
                 assert(P == 1)
                 newPoints[0] = self.midPoint(self.edgeStarts[i], self.edgeEnds[i])
-                print "pas d'insert/append"
             else:
                 # List<Point> points = new ArrayList<Point>(Arrays.asList(edgePoints[i]));
-                print "on insert/append"
-                #if self.cycle < 5: print "cycle: " + str(self.cycle) + " start: " + str(self.edgeStarts[i]) + " end: " + str(self.edgeEnds[i])
-                #if self.cycle > 1180 : print "cycle: " + str(self.cycle) + " start: " + str(self.edgeStarts[i]) + " end: " + str(self.edgeEnds[i])
-                points = self.edgePoints[i]
+                points = []
+                points = self.edgePoints[i][:]
                 points.insert(0, self.edgeStarts[i])
                 points.append(self.edgeEnds[i])
-
+                
                 polylineLen = 0
                 segmentLen = [None] * (prevP + 1)
                         
@@ -528,6 +586,8 @@ class FDEB_RC:
                                 
                     d = L * (j + 1) - prevSegmentsLen
                     newPoints[j] = self.between(p, nextP, d / segmentLen[curSegment])
+        
+
         self.edgePoints = newEdgePoints
 
     """
@@ -541,20 +601,27 @@ class FDEB_RC:
 # TODO : On ne doit pas organiser les fonctions de "sortie" comme eux
 # => On n'a pas l'affichage sous forme de graphes à gérer
 # => Nous, on doit simplement injecter dans nos features leurs nouvelles géométrie
-
+    def addEdgeEnds(self):
+        for i in range(len(self.edgePoints)):
+            if (self.isSelfLoop(i)):
+                continue   # ignore self-loops
+            else:
+                self.edgePoints[i].insert(0, self.edgeStarts[i])
+                self.edgePoints[i].append(self.edgeEnds[i])
+                
     def updateLines(self):
+        self.addEdgeEnds()
         provider = self.layer.dataProvider()
         allAttrs = provider.attributeIndexes()
         provider.select(allAttrs)
         feat = QgsFeature()
         i = 0
-        # print self.edgePoints
         while provider.nextFeature(feat):
-            #print self.edgePoints[i]
             self.layer.startEditing()
             # 1 - On crée un rubberband à partir du tableau edgePoints
             # Création d'un rb vide
             rb = QgsRubberBand(self.canvas,  True) 
+    
             # On remplit notre rubberband avec les points du tableau edgePoints
             for j in range(len(self.edgePoints[i])):
                 rb.addPoint(self.edgePoints[i][j])
@@ -564,12 +631,15 @@ class FDEB_RC:
             for k in range(rb.numberOfVertices()):
                 coords.append(rb.getPoint(0,k))
             # On remplace la geom de la feat avec coords
+    
             self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
             # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
             # On supprime le rb
             rb.reset()
             # On commit le changement
             self.layer.commitChanges()
+            #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
+            #print feat.geometry().length()
             
             # C'est fini, on peut donc incrémenter notre compteur.
             i += 1

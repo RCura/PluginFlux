@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_fdeb_RC.ui'
 #
-# Created: Tue Oct  4 14:06:14 2011
+# Created: Mon Oct 10 17:33:49 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -29,6 +29,17 @@ class Ui_Dialog(object):
         self.pB_test = QtGui.QPushButton(Dialog)
         self.pB_test.setGeometry(QtCore.QRect(10, 590, 111, 31))
         self.pB_test.setObjectName(_fromUtf8("pB_test"))
+        self.progressBar = QtGui.QProgressBar(Dialog)
+        self.progressBar.setEnabled(True)
+        self.progressBar.setGeometry(QtCore.QRect(10, 550, 571, 23))
+        self.progressBar.setAutoFillBackground(False)
+        self.progressBar.setProperty(_fromUtf8("value"), 0)
+        self.progressBar.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.progressBar.setTextVisible(True)
+        self.progressBar.setOrientation(QtCore.Qt.Horizontal)
+        self.progressBar.setInvertedAppearance(False)
+        self.progressBar.setTextDirection(QtGui.QProgressBar.BottomToTop)
+        self.progressBar.setObjectName(_fromUtf8("progressBar"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -42,4 +53,5 @@ class Ui_Dialog(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.btnClose.setText(QtGui.QApplication.translate("Dialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
         self.pB_test.setText(QtGui.QApplication.translate("Dialog", "Test", None, QtGui.QApplication.UnicodeUTF8))
+        self.progressBar.setFormat(QtGui.QApplication.translate("Dialog", "%p%", None, QtGui.QApplication.UnicodeUTF8))
 
