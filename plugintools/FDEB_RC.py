@@ -12,6 +12,7 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 import math
+import time as t
 import pdb
 
 # FIXME : Les resultats peuvent être du grand n'importe-quoi
@@ -21,6 +22,7 @@ import pdb
 # ne fasse plus de 2(?) fois la taille de la ligne d'arrivée
 
 # TODO : Regarder les commentaires à l'appel de springForces (ligne 386)
+# FIXME : Il y a un plantage quand on ne trouve aucun segment compatible
 
 
 class FDEB_RC:
@@ -58,19 +60,25 @@ class FDEB_RC:
         # Step Size
         self.S = 0.0 
         # number of iteration steps performed during a cycle
+        
+        self.iteration = 0 # Just to know where we are.
+        self.edgeCompatibilityThreshold = 0
+        self.numCycle = 0
         self.I = 0
+
         
     def test(self):
         print "FDEB RC"
         pyqtRemoveInputHook()
         pdb.set_trace()
-        self.bundle(5)
+
+        self.bundle(self.numCycle)
 
     def bundle(self,numCycles):
         self.init()
         self.fdebGUI_RC.progressBar.setValue(1)
         for i in range(numCycles):
-            if (i == 0): 
+            if (i == 0):
                 self.progress = 10
             else:
                 self.progress = (100 / numCycles) * i
@@ -85,6 +93,12 @@ class FDEB_RC:
             
 
     def init(self):
+        self.I = self.fdebGUI_RC.numSteps.value()
+        self.numCycle = self.fdebGUI_RC.numCycles.value()
+        self.edgeCompatibilityThreshold = self.fdebGUI_RC.compatibilityThreshold.value()
+        print self.edgeCompatibilityThreshold
+        print self.numCycle
+        print self.I
         self.numEdges = self.layer.featureCount()
         self.edgeLengths = [None] * self.numEdges
         self.edgeStarts = [None] * self.numEdges
@@ -131,7 +145,6 @@ class FDEB_RC:
         #  edgeValueMax = evMax;
         #  edgeValueMin = evMin;
         # }
-        self.I = 20
         self.P = 1
         self.Pdouble = 1
         self.S = 1.0
@@ -145,12 +158,12 @@ class FDEB_RC:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-        edgeCompatibilityThreshold = 0.3
   
         for i in range(numEdges):
+            print "Calcul des compatibilités de %s / %s"%(i, numEdges)
             for j in range(i):
                 C = self.calcEdgeCompatibility(i, j)
-                if (abs(C) >= edgeCompatibilityThreshold):
+                if (abs(C) >= self.edgeCompatibilityThreshold):
                     self.compatibleEdgeLists[i].append([j,C])
                     self.compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
@@ -346,8 +359,9 @@ class FDEB_RC:
             tmpEdgePoints[i] = [None] * P
         
         step = 0
+        self.iteration = 0
         while (step < I):
-            
+            self.iteration = step
             pe = 0
             while (pe < self.numEdges): 
                 tmpEdgePoints[pe] = self.computeEdges(pe,tmpEdgePoints[pe],P,S)
@@ -390,8 +404,9 @@ class FDEB_RC:
             # Essayer de réduire les accès aux points en mettant tout ça en tableau.
             # Tester ce qui prend vraiment la majorité du temps à l'interieur.
             subTmpEdgePoints = self.springForces(i,S,pe,P,k_p,subTmpEdgePoints)
+            print "Temps total pour springforces: %s secondes" %(t2-t1)
             i = i + 1
-            print "pe : %s / P: %s / i: %s / k_p: %s" %(pe, P, i, k_p)
+            print "Cycle : %s / Iteration : %s/%s / pe : %s / k_p: %s" %(self.cycle, self.iteration, self.I, pe, k_p)
 
         return subTmpEdgePoints
 
@@ -407,7 +422,6 @@ class FDEB_RC:
 
         # List<CompatibleEdge> compatible = compatibleEdgeLists[pe];
         compatible = self.compatibleEdgeLists[pe]
-
         # spring forces
         p_i = p[i]
         
@@ -430,15 +444,13 @@ class FDEB_RC:
         if (abs(k_p) < 1.0):
             Fsi_x = Fsi_x * k_p
             Fsi_y = Fsi_y * k_p
-        
         # attracting electrostatic forces (for each other compatible edge)
         Fei_x = 0
         Fei_y = 0
             
         size = len(compatible)
-        # print "taille compatible = " + str(size)
+        print "taille compatible = " + str(size)
         ci = 0
-
         while(ci < size):
                         
             ce = compatible[ci]
@@ -457,7 +469,6 @@ class FDEB_RC:
 
             # print "v_x = " + str(v_x)
             # print "v_x = " + str(v_x)
-            
             if (abs(v_x) > 1e-7  or abs(v_y) > 1e-7):  # zero vector has no direction
                 d = math.sqrt(v_x * v_x + v_y * v_y)  # shouldn't be zero
                 m = 0.0
@@ -492,7 +503,6 @@ class FDEB_RC:
                              
             ci = ci + 1
             # end while ci
-    
         Fpi_x = Fsi_x + Fei_x
         Fpi_y = Fsi_y + Fei_y
 

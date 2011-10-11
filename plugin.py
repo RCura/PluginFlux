@@ -252,7 +252,8 @@ class PluginFlux:
             self.fdebGUI_RC.setWindowTitle('FDEB - Version de RC')
             QObject.connect(self.fdebGUI_RC.btnClose, SIGNAL('clicked()'), self.closeFDEB_RC)
             QObject.connect(self.fdebGUI_RC.pB_test, SIGNAL('clicked()'), self.launchFDEB_RC)
-            self.fdebGUI_RC.textEdit.setText("Test de texte..... Pour Robin")
+            self.fdebGUI_RC.selectedLayer.setText(str(self.canvas.currentLayer().name()))
+            self.fdebGUI_RC.numFeatures.setText(str(self.canvas.currentLayer().featureCount())) 
             self.fdebGUI_RC.show()
     
     def closeFDEB_RC(self):
