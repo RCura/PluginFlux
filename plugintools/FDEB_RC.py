@@ -14,6 +14,7 @@ from qgis.gui import *
 import math
 import time as t
 import pdb
+from CommonUtils import FlowUtils
 
 # FIXME : Les resultats peuvent être du grand n'importe-quoi
 # Deplacements beaucoup trop importants
@@ -71,7 +72,7 @@ class FDEB_RC:
         print "FDEB RC"
         pyqtRemoveInputHook()
         pdb.set_trace()
-
+        self.numCycle = self.fdebGUI_RC.numCycles.value()
         self.bundle(self.numCycle)
 
     def bundle(self,numCycles):
@@ -86,7 +87,7 @@ class FDEB_RC:
             print "Cycle " + str(i) + " terminé"
             self.fdebGUI_RC.progressBar.setValue(self.progress)
         # On sort le updateLines de la boucle
-        self.updateLines()    
+        self.createLines()  
         self.progress = 100
         self.fdebGUI_RC.progressBar.setValue(self.progress)
         print "tout est terminé"
@@ -94,11 +95,7 @@ class FDEB_RC:
 
     def init(self):
         self.I = self.fdebGUI_RC.numSteps.value()
-        self.numCycle = self.fdebGUI_RC.numCycles.value()
         self.edgeCompatibilityThreshold = self.fdebGUI_RC.compatibilityThreshold.value()
-        print self.edgeCompatibilityThreshold
-        print self.numCycle
-        print self.I
         self.numEdges = self.layer.featureCount()
         self.edgeLengths = [None] * self.numEdges
         self.edgeStarts = [None] * self.numEdges
@@ -119,8 +116,9 @@ class FDEB_RC:
         i = 0
         while provider.nextFeature(feat):
             # type Edge ou QgisLine
+            lastEdge = len(feat.geometry().asPolyline()) - 1
             self.edgeStarts[i] = feat.geometry().asPolyline()[0]
-            self.edgeEnds[i] = feat.geometry().asPolyline()[1]
+            self.edgeEnds[i] = feat.geometry().asPolyline()[lastEdge]
             length = feat.geometry().length()
             
             if (abs(length) < (1e-7)):
@@ -404,7 +402,6 @@ class FDEB_RC:
             # Essayer de réduire les accès aux points en mettant tout ça en tableau.
             # Tester ce qui prend vraiment la majorité du temps à l'interieur.
             subTmpEdgePoints = self.springForces(i,S,pe,P,k_p,subTmpEdgePoints)
-            print "Temps total pour springforces: %s secondes" %(t2-t1)
             i = i + 1
             print "Cycle : %s / Iteration : %s/%s / pe : %s / k_p: %s" %(self.cycle, self.iteration, self.I, pe, k_p)
 
@@ -618,46 +615,53 @@ class FDEB_RC:
             else:
                 self.edgePoints[i].insert(0, self.edgeStarts[i])
                 self.edgePoints[i].append(self.edgeEnds[i])
-                
-    def updateLines(self):
+                 
+            
+    def createLines(self):
         self.addEdgeEnds()
-        provider = self.layer.dataProvider()
-        allAttrs = provider.attributeIndexes()
-        provider.select(allAttrs)
-        feat = QgsFeature()
+        newLayerName = "%s_FDEB"%self.layer.name()
+        oldLayer = self.layer
+        newLayer = FlowUtils(self.iface).createTempLayer("LINESTRING", newLayerName)
+        self.layer = newLayer
+        oldProvider = oldLayer.dataProvider()
+        newProvider = newLayer.dataProvider()
+        allAttrs = oldProvider.attributeIndexes()
+        oldProvider.select(allAttrs)
+        oldFeat = QgsFeature()
         i = 0
-        while provider.nextFeature(feat):
-            self.layer.startEditing()
-            # 1 - On crée un rubberband à partir du tableau edgePoints
-            # Création d'un rb vide
-            rb = QgsRubberBand(self.canvas,  True) 
-    
-            # On remplit notre rubberband avec les points du tableau edgePoints
+        for i in range(len(oldProvider.fields())):
+            newProvider.addAttributes([oldProvider.fields()[i]])
+        i = 0
+        while oldProvider.nextFeature(oldFeat):
+            newLayer.startEditing()
+            # Create and fill the rubberband
+            rb = QgsRubberBand(self.canvas,  True)     
+            j = 0
             for j in range(len(self.edgePoints[i])):
                 rb.addPoint(self.edgePoints[i][j])
-            # 2 - On copie la geometrie du rubberband dans les feat
-            # On converti le rb en coords
+            # Create the geometry list
             coords = []
             for k in range(rb.numberOfVertices()):
                 coords.append(rb.getPoint(0,k))
-            # On remplace la geom de la feat avec coords
-    
-            self.layer.changeGeometry(feat.id(),QgsGeometry.fromPolyline(coords))
-            # print "geom : " + str(QgsGeometry.fromPolyline(coords).asPolyline())
-            # On supprime le rb
-            rb.reset()
-            # On commit le changement
-            self.layer.commitChanges()
-            #print str(feat.id())+ " " + str(feat.geometry().asPolyline())
-            #print feat.geometry().length()
             
-            # C'est fini, on peut donc incrémenter notre compteur.
-            i += 1
-        # On actualise le canvas.
+            # Set geometry and attributes to new Feature
+            newFeat = QgsFeature()
+            newFeat.setGeometry(QgsGeometry.fromPolyline(coords))
+            newFeat.setAttributeMap(oldFeat.attributeMap())
+            print oldFeat.attributeMap()
+            print newFeat.attributeMap()
+            newProvider.addFeatures([newFeat])
+            newLayer.commitChanges()
+            newLayer.updateExtents()
+            rb.reset()
+            i = i + 1
+        newLayer.setUsingRendererV2(True)
+        print "SymboV2 : oldLayer : %s / newLayer : %s"%(oldLayer.isUsingRendererV2(),newLayer.isUsingRendererV2() )
+        print newLayer.hasCompatibleSymbology(oldLayer)
+        print newLayer.copySymbologySettings(oldLayer)
         self.canvas.refresh()
         
-            
-            
+        
         
 
     
