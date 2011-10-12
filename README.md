@@ -1,120 +1,87 @@
-Test du github Markup
+Plugin QGIS de cartographie des flux
 =============
 
-We use this library on GitHub when rendering your README or any other
-rich text file.
+Ce plugin doit permettre l'analyse et la représentation des flux 
+résultant des innovations de SLocal/SNet.
 
-Markups
+Etat
 -------
 
-The following markups are supported.  The dependencies listed are required if
-you wish to run the library.
+### Bezier
 
-* [.markdown](http://daringfireball.net/projects/markdown/) -- `gem install rdiscount`
-* [.textile](http://www.textism.com/tools/textile/) -- `gem install RedCloth`
-* [.rdoc](http://rdoc.sourceforge.net/)
-* [.org](http://orgmode.org/) -- `gem install org-ruby`
-* [.creole](http://wikicreole.org/) -- `gem install creole`
-* [.rst](http://docutils.sourceforge.net/rst.html) -- `easy_install docutils`
-* [.asciidoc](http://www.methods.co.nz/asciidoc/) -- `brew install asciidoc`
-* [.pod](http://search.cpan.org/dist/perl/pod/perlpod.pod) -- `Pod::Simple::HTML`
-  comes with Perl >= 5.10. Lower versions should install Pod::Simple from CPAN.
-* .1 - Requires [`groff`](http://www.gnu.org/software/groff/)
+* Fonctions globalement fonctionnelles
+* Manque implémentation complète dans l'outil (BezierTool)
+* Table de répartition prête
+* Utiliser les fonctions snapTo pour plus de facilité
+
+### FDEB
+
+* Semble fonctionnel, mais résultats étranges
+* Les déplacements peuvent être très forts (tours autour des lignes de
+ départ) de même que très faibles (invisibles sans intersection).
+* L'intégration dans le GUI du paramétrage est en cours
+* Re-travailler sur la barre d'avancement, pas assez précise
+* Travailler sur le threading pour que tout reste actif
+ pendant le calcul
+* Fixer un paramètrage par défaut correct
+* Créer dans une nouvelle couche plutôt que modifier géometrie.
+
+### Oursins : Great-circles
+
+* Pas très long vraisemblablement
+* Aucune chance de parvenir à l'avoir d'ici la fin du stage
+* Je ne vais que le mentionner dans le rapport, peut-être que ce sera prêt
+ pour la soutenance mais je n'y compte pas.
+
+### Import de données
+
+* Pour l'instant, rien de créé : import de lignes simples
+* A fabriquer absolument d'ici la soutenance
+* Priorité : Création de lignes depuis Ox-Oy / Dx-Dy
+* Mettre rapidement en place aussi l'import SVG
+
+### Export de données
+
+* Pour l'instant : SVG basique
+* A adapter pour FDEB et plus tard great-circles
+* Mettre en place la symbologie, indispensable
+* Créer un SVG spécialement formatté pour l'import.
 
 
-Contributing
+
+
+TODO
 ------------
 
-Want to contribute? Great! There are two ways to add markups.
+### Priorité absolue
+
+* Finir FDEB
+* Finir Bezier
+* Export SVG symbologie
+* Import table OD
+
+### Important
+
+* Affichage des flux selon selection / Export des flux selon selection
+* Great circles
+* Export SVG spécialisé
+
+### Bonus
+
+* Gérer d'autres formats d'entrée : Sans doute via une fenêtre différente
+ -> table OD + shape, table OD + 2 shape, Matrice OD + shape
 
 
-### Commands
 
-If your markup is in a language other than Ruby, drop a translator
-script in `lib/github/commands` which accepts input on STDIN and
-returns HTML on STDOUT. See [rest2html][r2h] for an example.
-
-Once your script is in place, edit `lib/github/markups.rb` and tell
-GitHub Markup about it. Again we look to [rest2html][r2hc] for
-guidance:
-
-    command(:rest2html, /re?st(.txt)?/)
-
-Here we're telling GitHub Markup of the existence of a `rest2html`
-command which should be used for any file ending in `rest`,
-`rst`, `rest.txt` or `rst.txt`. Any regular expression will do.
-
-Finally add your tests. Create a `README.extension` in `test/markups`
-along with a `README.extension.html`. As you may imagine, the
-`README.extension` should be your known input and the
-`README.extension.html` should be the desired output.
-
-Now run the tests: `rake`
-
-If nothing complains, congratulations!
-
-
-### Classes
-
-If your markup can be translated using a Ruby library, that's
-great. Check out Check `lib/github/markups.rb` for some
-examples. Let's look at Markdown:
-
-    markup(:markdown, /md|mkdn?|markdown/) do |content|
-      Markdown.new(content).to_html
-    end
-
-We give the `markup` method three bits of information: the name of the
-file to `require`, a regular expression for extensions to match, and a
-block to run with unformatted markup which should return HTML.
-
-If you need to monkeypatch a RubyGem or something, check out the
-included RDoc example.
-
-Tests should be added in the same manner as described under the
-`Commands` section.
-
-
-Installation
------------
-
-    gem install github-markup
-
-
-Usage
------
-
-    require 'github/markup'
-    GitHub::Markup.render('README.markdown', "* One\n* Two")
-
-Or, more realistically:
-
-    require 'github/markup'
-    GitHub::Markup.render(file, File.read(file))
-
-
-Testing
--------
-
-To run the tests:
-
-    $ rake
-
-To add tests see the `Commands` section earlier in this
-README.
-
-
-Contributing
+FIXME
 ------------
 
-1. Fork it.
-2. Create a branch (`git checkout -b my_markup`)
-3. Commit your changes (`git commit -am "Added Snarkdown"`)
-4. Push to the branch (`git push origin my_markup`)
-5. Create an [Issue][1] with a link to your branch
-6. Enjoy a refreshing Diet Coke and wait
+### FDEB :
+* Comportement étrange, à vérifier
+* Essayer de réduire le temps de calcul
+* Bug quand aucun compatible
+* Création nouvelle couche
 
 
-[r2h]: http://github.com/github/markup/tree/master/lib/github/commands/rest2html
-[r2hc]: http://github.com/github/markup/tree/master/lib/github/markups.rb#L13
-[1]: http://github.com/github/markup/issues
+
+
