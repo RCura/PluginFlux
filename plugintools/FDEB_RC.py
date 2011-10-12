@@ -70,23 +70,30 @@ class FDEB_RC:
         
     def test(self):
         print "FDEB RC"
-        pyqtRemoveInputHook()
-        pdb.set_trace()
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
         self.numCycle = self.fdebGUI_RC.numCycles.value()
         self.bundle(self.numCycle)
 
     def bundle(self,numCycles):
+        initStartTime = t.time()
         self.init()
+        initEndTime = t.time()
+        print "Initialisation lasted %s seconds"%(initEndTime - initStartTime)
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
         self.fdebGUI_RC.progressBar.setValue(1)
+        cyclesStartTime = t.time()
         for i in range(numCycles):
             if (i == 0):
                 self.progress = 10
             else:
                 self.progress = (100 / numCycles) * i
             self.nextCycle()
-            print "Cycle " + str(i) + " terminé"
             self.fdebGUI_RC.progressBar.setValue(self.progress)
         # On sort le updateLines de la boucle
+        cyclesEndTime = t.time()
+        print "Iteration through cycles took %s seconds"%(cyclesEndTime - cyclesStartTime)
         self.createLines()  
         self.progress = 100
         self.fdebGUI_RC.progressBar.setValue(self.progress)
@@ -96,6 +103,7 @@ class FDEB_RC:
     def init(self):
         self.I = self.fdebGUI_RC.numSteps.value()
         self.edgeCompatibilityThreshold = self.fdebGUI_RC.compatibilityThreshold.value()
+        print "Threshold : %s / numCycles : %s / numSteps : %s"%(self.edgeCompatibilityThreshold, self.numCycle, self.I )
         self.numEdges = self.layer.featureCount()
         self.edgeLengths = [None] * self.numEdges
         self.edgeStarts = [None] * self.numEdges
@@ -115,6 +123,7 @@ class FDEB_RC:
         feat = QgsFeature()
         i = 0
         while provider.nextFeature(feat):
+
             # type Edge ou QgisLine
             lastEdge = len(feat.geometry().asPolyline()) - 1
             self.edgeStarts[i] = feat.geometry().asPolyline()[0]
@@ -156,16 +165,19 @@ class FDEB_RC:
         
         self.compatibleEdgeLists = [[None]] * numEdges
         numCompatible = 0
-  
+        initProgress = 0
+        numCalcs = float(self.sommeSuite(range(numEdges)))
         for i in range(numEdges):
-            print "Calcul des compatibilités de %s / %s"%(i, numEdges)
+            initProgress =  (float(self.sommeSuite(range(i))) / numCalcs * 100) + 1
+            # print "Calcul des compatibilités de %s / %s"%(i, numEdges)
             for j in range(i):
                 C = self.calcEdgeCompatibility(i, j)
                 if (abs(C) >= self.edgeCompatibilityThreshold):
                     self.compatibleEdgeLists[i].append([j,C])
                     self.compatibleEdgeLists[j].append([i,C])
                     numCompatible = numCompatible + 1
-
+            self.fdebGUI_RC.initProgressBar.setValue(initProgress)
+        self.fdebGUI_RC.initProgressBar.setValue(100)
     def calcEdgeCompatibility(self,i,j):
         C = 0.0
         
@@ -403,7 +415,7 @@ class FDEB_RC:
             # Tester ce qui prend vraiment la majorité du temps à l'interieur.
             subTmpEdgePoints = self.springForces(i,S,pe,P,k_p,subTmpEdgePoints)
             i = i + 1
-            print "Cycle : %s / Iteration : %s/%s / pe : %s / k_p: %s" %(self.cycle, self.iteration, self.I, pe, k_p)
+            # print "Cycle : %s / Iteration : %s/%s / pe : %s / k_p: %s" %(self.cycle, self.iteration, self.I, pe, k_p)
 
         return subTmpEdgePoints
 
@@ -446,7 +458,6 @@ class FDEB_RC:
         Fei_y = 0
             
         size = len(compatible)
-        print "taille compatible = " + str(size)
         ci = 0
         while(ci < size):
                         
@@ -648,8 +659,6 @@ class FDEB_RC:
             newFeat = QgsFeature()
             newFeat.setGeometry(QgsGeometry.fromPolyline(coords))
             newFeat.setAttributeMap(oldFeat.attributeMap())
-            print oldFeat.attributeMap()
-            print newFeat.attributeMap()
             newProvider.addFeatures([newFeat])
             newLayer.commitChanges()
             newLayer.updateExtents()
@@ -662,6 +671,7 @@ class FDEB_RC:
         self.canvas.refresh()
         
         
-        
+    def sommeSuite(self, liste):
+        def addition(x,y): return x+y
+        return reduce(addition, liste, 0)
 
-    
