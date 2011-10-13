@@ -1,4 +1,4 @@
-Plugin QGIS de cartographie des flux
+﻿Plugin QGIS de cartographie des flux
 =============
 
 Ce plugin doit permettre l'analyse et la représentation des flux 
@@ -72,7 +72,6 @@ TODO
  -> table OD + shape, table OD + 2 shape, Matrice OD + shape
 
 
-
 FIXME
 ------------
 
@@ -81,6 +80,7 @@ FIXME
 * Essayer de réduire le temps de calcul
 * Bug quand aucun compatible
 * Création nouvelle couche
+* '-inf' et 'inf' ne sont pas gérés sous windows
 
 
 
