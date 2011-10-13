@@ -66,6 +66,8 @@ class FDEB_RC:
         self.edgeCompatibilityThreshold = 0
         self.numCycle = 0
         self.I = 0
+        self.maxLength = 0
+        self.attractionStrength = 0
 
         
     def test(self):
@@ -80,9 +82,7 @@ class FDEB_RC:
         self.init()
         initEndTime = t.time()
         print "Initialisation lasted %s seconds"%(initEndTime - initStartTime)
-        #pyqtRemoveInputHook()
-        #pdb.set_trace()
-        self.fdebGUI_RC.progressBar.setValue(1)
+        self.fdebGUI_RC.progressBar.setValue(0)
         cyclesStartTime = t.time()
         for i in range(numCycles):
             if (i == 0):
@@ -102,12 +102,22 @@ class FDEB_RC:
 
     def init(self):
         self.I = self.fdebGUI_RC.numSteps.value()
+        myAttractionStrength = self.fdebGUI_RC.attractionStrength.value()
+        self.attractionStrength = 10**(-(myAttractionStrength))
+        #print self.attractionStrength
+        #pyqtRemoveInputHook()
+        #pdb.set_trace()
         self.edgeCompatibilityThreshold = self.fdebGUI_RC.compatibilityThreshold.value()
-        print "Threshold : %s / numCycles : %s / numSteps : %s"%(self.edgeCompatibilityThreshold, self.numCycle, self.I )
+        #print "Threshold : %s / numCycles : %s / numSteps : %s"%(self.edgeCompatibilityThreshold, self.numCycle, self.I )
         self.numEdges = self.layer.featureCount()
         self.edgeLengths = [None] * self.numEdges
         self.edgeStarts = [None] * self.numEdges
         self.edgeEnds = [None] * self.numEdges
+        xMin = self.layer.extent().xMinimum()
+        xMax = self.layer.extent().xMaximum()
+        yMin = self.layer.extent().yMinimum()
+        yMax = self.layer.extent().yMaximum()
+        self.maxLength = math.sqrt( (xMax-xMin)**2 + (yMax-yMin)**2 )
         evMin = float('-inf') # A conserver pour EdgeValueAffectsAttraction
         evMax = float('+inf') # Idem evMin
         # FIXME : A mettre en place avec les params.
@@ -286,6 +296,7 @@ class FDEB_RC:
 #            Cp = Cp >= threshold ? 1.0 : 0.0;
 #            Cv = Cv >= threshold ? 1.0 : 0.0;
 #        }
+        #print "Ca : %s / Cs : %s / Cp : %s / Cv : %s"%(Ca, Cs, Cp, Cv)
         standardEdgeCompatibility = Ca * Cs * Cp * Cv
         return standardEdgeCompatibility
 
@@ -484,7 +495,13 @@ class FDEB_RC:
                 if (useInverseQuadraticModel):
                     m = (C / d) / (d * d)
                 else:
-                    m = (C / d) / d
+                    #m = (C / d**2)
+                    # FIXME : C'est ici que je teste les formules pour adapter d
+                    d_weighted = d / (self.maxLength * self.attractionStrength)
+                    m = C / d_weighted**2
+                    # => Comme les coords de jFlowMap sont entre -100 et +100,
+                    # on adapte : Diagonale de l'extent / diagonale max jflowmap
+                    #print "C : %s , d : %s, m : %s, maxLength : %s, sqrt : %s"%(C, d, m, self.maxLength, math.sqrt(200**2 + 200**2))
                     # print "m equqal > " + str(m)
  
                 if (C < 0):  # means that repulsion is enabled
@@ -508,8 +525,10 @@ class FDEB_RC:
                 v_y = v_y * m
                 Fei_x = Fei_x + v_x
                 Fei_y = Fei_y + v_y
-                             
+            # pyqtRemoveInputHook()
+            # pdb.set_trace()                                 
             ci = ci + 1
+            
             # end while ci
         Fpi_x = Fsi_x + Fei_x
         Fpi_y = Fsi_y + Fei_y
@@ -517,8 +536,7 @@ class FDEB_RC:
         # np est un Point
         np = newP[i]
         if (np == None):
-            np = QgsPoint(p[i].x(), p[i].y())
-                         
+            np = QgsPoint(p[i].x(), p[i].y())             
         np = QgsPoint(np.x() + Fpi_x * S, np.y() + Fpi_y * S)
         newP[i] = np
         return newP

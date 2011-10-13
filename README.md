@@ -16,15 +16,13 @@ Etat
 
 ### FDEB
 
-* Semble fonctionnel, mais résultats étranges
+* A peu près fonctionnel
 * Les déplacements peuvent être très forts (tours autour des lignes de
  départ) de même que très faibles (invisibles sans intersection).
-* L'intégration dans le GUI du paramétrage est en cours
-* Re-travailler sur la barre d'avancement, pas assez précise
+* On a donc un nouveau paramètre : Attraction Strength;
+* Re-travailler sur la barre d'avancement (générale), pas assez précise.
 * Travailler sur le threading pour que tout reste actif
  pendant le calcul
-* Fixer un paramètrage par défaut correct
-* Créer dans une nouvelle couche plutôt que modifier géometrie.
 
 ### Oursins : Great-circles
 
@@ -55,7 +53,6 @@ TODO
 
 ### Priorité absolue
 
-* Finir FDEB
 * Finir Bezier
 * Export SVG symbologie
 * Import table OD
@@ -76,10 +73,8 @@ FIXME
 ------------
 
 ### FDEB :
-* Comportement étrange, à vérifier
 * Essayer de réduire le temps de calcul
 * Bug quand aucun compatible
-* Création nouvelle couche
 * '-inf' et 'inf' ne sont pas gérés sous windows
 
 
