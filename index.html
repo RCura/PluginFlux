@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Pluginflux : Plugin QGIS de visualisation de flux (sorties SLocal et SNet) pour Geocités" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Pluginflux</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/RCura/PluginFlux">View on GitHub</a>
+
+          <h1 id="project_title">Pluginflux</h1>
+          <h2 id="project_tagline">Plugin QGIS de visualisation de flux (sorties SLocal et SNet) pour Geocités</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/RCura/PluginFlux/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/RCura/PluginFlux/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Plugin QGIS de cartographie des flux</h1>
+
+<p>Ce plugin doit permettre l'analyse et la représentation des flux 
+résultant des innovations de SLocal/SNet.</p>
+
+<h2>Etat</h2>
+
+<h3>Bezier</h3>
+
+<ul>
+<li>Fonctions globalement fonctionnelles</li>
+<li>Manque implémentation complète dans l'outil (BezierTool)</li>
+<li>Table de répartition prête</li>
+<li>Utiliser les fonctions snapTo pour plus de facilité</li>
+</ul><h3>FDEB</h3>
+
+<ul>
+<li>A peu près fonctionnel</li>
+<li>Les déplacements peuvent être très forts (tours autour des lignes de
+départ) de même que très faibles (invisibles sans intersection).</li>
+<li>On a donc un nouveau paramètre : Attraction Strength;</li>
+<li>Re-travailler sur la barre d'avancement (générale), pas assez précise.</li>
+<li>Travailler sur le threading pour que tout reste actif
+pendant le calcul</li>
+</ul><h3>Oursins : Great-circles</h3>
+
+<ul>
+<li>Pas très long vraisemblablement</li>
+<li>Aucune chance de parvenir à l'avoir d'ici la fin du stage</li>
+<li>Je ne vais que le mentionner dans le rapport, peut-être que ce sera prêt
+pour la soutenance mais je n'y compte pas.</li>
+</ul><h3>Import de données</h3>
+
+<ul>
+<li>Pour l'instant, rien de créé : import de lignes simples</li>
+<li>A fabriquer absolument d'ici la soutenance</li>
+<li>Priorité : Création de lignes depuis Ox-Oy / Dx-Dy</li>
+<li>Mettre rapidement en place aussi l'import SVG</li>
+</ul><h3>Export de données</h3>
+
+<ul>
+<li>Pour l'instant : SVG basique</li>
+<li>A adapter pour FDEB et plus tard great-circles</li>
+<li>Mettre en place la symbologie, indispensable</li>
+<li>Créer un SVG spécialement formatté pour l'import.</li>
+</ul><h2>TODO</h2>
+
+<h3>Priorité absolue</h3>
+
+<ul>
+<li>Finir Bezier</li>
+<li>Export SVG symbologie</li>
+<li>Import table OD</li>
+</ul><h3>Important</h3>
+
+<ul>
+<li>Affichage des flux selon selection / Export des flux selon selection</li>
+<li>Great circles</li>
+<li>Export SVG spécialisé</li>
+</ul><h3>Bonus</h3>
+
+<ul>
+<li>Gérer d'autres formats d'entrée : Sans doute via une fenêtre différente
+-&gt; table OD + shape, table OD + 2 shape, Matrice OD + shape</li>
+</ul><h2>FIXME</h2>
+
+<h3>FDEB :</h3>
+
+<ul>
+<li>Essayer de réduire le temps de calcul</li>
+<li>Bug quand aucun compatible</li>
+<li>'-inf' et 'inf' ne sont pas gérés sous windows</li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Pluginflux maintained by <a href="https://github.com/RCura">RCura</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
